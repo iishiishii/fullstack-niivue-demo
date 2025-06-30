@@ -18,6 +18,7 @@ import ImageUploader from "./image-uploader"
 import ImageCanvas from "./image-canvas"
 import { sliceTypeMap } from "./image-canvas"
 import { ViewMode } from "./view-selector"
+import {v4 as uuidv4} from 'uuid';
 
 type ImageFile = {
   id: string
@@ -83,7 +84,7 @@ export default function MedicalImageProcessor() {
     setImages(images.map((img) => (img.id === id ? { ...img, selected: !img.selected } : img)))
   }
 
-  // Define an async function to fetch scene data
+  // Define an async function to fetch Partial document 
   const fetchScene = async (): Promise<Partial<DocumentData>> => {
     // Adjust the URL to match the backend endpoint you've set up.
     const response = await fetch('/scene')
@@ -118,7 +119,17 @@ export default function MedicalImageProcessor() {
       });
 
     // Create Partial DocumentData for selected images for processing request
-    const nvd = nvCopy.json()
+    const nvd: Partial<DocumentData> = ({
+      "title": uuidv4(),
+      "imageOptionsArray": selectedImages.map((img) => ({
+        "url": "",
+        "name": img.name,
+        "colormap": "gray",
+        "opacity": 1,
+        "id": img.id
+      })),
+    })
+    
     console.log("NVDocument for processing:", nvd)
     // Get the tool name from the processing tools array
     const tool = processingTools.find((t) => t.id === selectedTool)

@@ -3,14 +3,14 @@ import { Clock, CheckCircle, XCircle, Hourglass, Eye, Download, Trash2 } from "l
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { NVDocument, ExportDocumentData } from "@niivue/niivue"
+import { NVDocument, DocumentData } from "@niivue/niivue"
 
 export type ProcessingStatus = "pending" | "completed" | "failed"
 
 export interface ProcessingHistoryItem {
   id: string
   timestamp: Date
-  nvDocument: ExportDocumentData
+  nvDocument: Partial<DocumentData>
   toolName: string
   status: ProcessingStatus
   result?: NVDocument
