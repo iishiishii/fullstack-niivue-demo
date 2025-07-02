@@ -11,7 +11,7 @@ cmd = """
   cd ../frontend && \
   npm run build && \
   cd ../backend && \
-  fastapi dev src/server.py
+  fastapi dev app/main.py
 """
 
 [tasks.dev.env]
@@ -19,5 +19,21 @@ NIIVUE_BUILD_DIR = "../frontend/dist"
 DATA_DIR = "../data"
 SCENE_SCHEMA_ID = "niivue-fullstack-demo"
 
+[tasks.migrate]
+cmd = "alembic upgrade head"
+description = "Run database migrations"
+
+[tasks.migrate-auto]
+cmd = "alembic revision --autogenerate -m 'Auto-generated migration'"
+description = "Generate new migration from model changes"
+
 [dependencies]
 fastapi = ">=0.115.5,<0.116"
+
+[pypi-dependencies]
+niimath = ">=1.0.20250529, <2"
+sentry-sdk = ">=2.32.0, <3"
+sqlmodel = ">=0.0.24, <0.0.25"
+pydantic-settings = ">=2.10.1, <3"
+psycopg = { version = ">=3.2.9, <4", extras = ["binary"] }
+alembic = ">=1.16.2, <2"
