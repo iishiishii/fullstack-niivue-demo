@@ -1,27 +1,40 @@
-"use client"
-import { Clock, CheckCircle, XCircle, Hourglass, Eye, Download, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
-import { NVDocument, DocumentData } from "@niivue/niivue"
+"use client";
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  Hourglass,
+  Eye,
+  Download,
+  RefreshCcw,
+  Trash2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { DocumentData } from "@niivue/niivue";
 
-export type ProcessingStatus = "pending" | "completed" | "failed"
+export type ProcessingStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
 
 export interface ProcessingHistoryItem {
-  id: string
-  timestamp: Date
-  nvDocument: Partial<DocumentData>
-  toolName: string
-  status: ProcessingStatus
-  result?: NVDocument
-  error?: string
+  id: string;
+  timestamp: Date;
+  nvDocument: Partial<DocumentData>;
+  toolName: string;
+  status: ProcessingStatus;
+  result?: Partial<DocumentData>;
+  error?: string;
 }
 
 interface ProcessingHistoryProps {
-  history: ProcessingHistoryItem[]
-  onViewResult?: (item: ProcessingHistoryItem) => void
-  onDeleteItem?: (id: string) => void
-  onClearHistory?: () => void
+  history: ProcessingHistoryItem[];
+  onViewResult?: (item: ProcessingHistoryItem) => void;
+  onDeleteItem?: (id: string) => void;
+  onClearHistory?: () => void;
 }
 
 export default function ProcessingHistory({
@@ -36,51 +49,74 @@ export default function ProcessingHistory({
       day: "numeric",
       hour: "numeric",
       minute: "numeric",
-    }).format(date)
-  }
+    }).format(date);
+  };
 
   const getStatusIcon = (status: ProcessingStatus) => {
     switch (status) {
       case "pending":
-        return <Hourglass className="h-4 w-4 text-yellow-500" />
+        return <Hourglass className="h-4 w-4 text-yellow-500" />;
+      case "processing":
+        return <RefreshCcw className="h-4 w-4 text-yellow-500 animate spin" />;
       case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-500" />
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "failed":
-        return <XCircle className="h-4 w-4 text-red-500" />
+        return <XCircle className="h-4 w-4 text-red-500" />;
     }
-  }
+  };
 
   const getStatusBadge = (status: ProcessingStatus) => {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+          <Badge
+            variant="outline"
+            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+          >
             Processing
           </Badge>
-        )
+        );
+      case "processing":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/
+              20 animate-pulse"
+          >
+            Processing
+          </Badge>
+        );
       case "completed":
         return (
-          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+          <Badge
+            variant="outline"
+            className="bg-green-500/10 text-green-500 border-green-500/20"
+          >
             Completed
           </Badge>
-        )
+        );
       case "failed":
         return (
-          <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+          <Badge
+            variant="outline"
+            className="bg-red-500/10 text-red-500 border-red-500/20"
+          >
             Failed
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   if (history.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
         <Clock className="h-12 w-12 mb-4 opacity-20" />
         <h3 className="text-lg font-medium mb-2">No processing history</h3>
-        <p className="text-sm">Your processing history will appear here after you process images.</p>
+        <p className="text-sm">
+          Your processing history will appear here after you process images.
+        </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -102,7 +138,9 @@ export default function ProcessingHistory({
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center">
                     {getStatusIcon(item.status)}
-                    <span className="ml-2 font-medium text-sm">{item.toolName}</span>
+                    <span className="ml-2 font-medium text-sm">
+                      {item.toolName}
+                    </span>
                   </div>
                   {getStatusBadge(item.status)}
                 </div>
@@ -116,9 +154,7 @@ export default function ProcessingHistory({
 
                 <div className="text-xs mb-3">
                   <span className="text-muted-foreground">Scene: </span>
-                  <span>
-                    {item.id}
-                  </span>
+                  <span>{item.id}</span>
                 </div>
 
                 {item.status === "completed" && (
@@ -156,5 +192,5 @@ export default function ProcessingHistory({
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }
