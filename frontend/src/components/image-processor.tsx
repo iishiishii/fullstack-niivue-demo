@@ -15,7 +15,7 @@ import ProcessingHistory, {
 import { cn } from "@/lib/utils";
 import { useRef } from "react";
 import { DocumentData, Niivue, NVDocument, NVImage } from "@niivue/niivue";
-import "../App.css";
+
 import ImageUploader from "./image-uploader";
 import ImageCanvas from "./image-canvas";
 import { sliceTypeMap } from "./image-canvas";
