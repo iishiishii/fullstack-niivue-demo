@@ -5,19 +5,18 @@
 
 ## Technology Stack and Features
 
-- ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
+- ⚡️ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
     - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
     - 🔍 [Pydantic](https://docs.pydantic.dev), used by FastAPI, for the data validation and settings management.
     - 💾 [PostgreSQL](https://www.postgresql.org) as the SQL database.
-    - ⚒️ [Alembic](https://alembic.sqlalchemy.org/en/latest/) for database migration.
-- 🚀 [React](https://react.dev) for the frontend.
-    - 💃 Using TypeScript, hooks, Vite, and other parts of a modern frontend stack.
+    - 🔄 [Alembic](https://alembic.sqlalchemy.org/en/latest/) for database migration.
+- ⚛️ [React](https://react.dev) for the frontend.
+    - 🩻 [NiiVue](https://niivue.com/) for medical imaging visualization.
+    - 🪄 Using TypeScript, Vite, and other parts of a modern frontend stack.
     - 🎨 [shadcn/ui](https://ui.shadcn.com/) for the frontend components.
-- 📫 Email based password recovery.
-- ✅ Tests with [Pytest](https://pytest.org).
 
 ### Scene - Upload Images
-
+[![API docs](img/scene-upload.png)]
 
 ### Scene - Select Image Processing Tool
 
@@ -51,16 +50,13 @@ Backend docs: [backend/README.md](./backend/README.md).
 
 Frontend docs: [frontend/README.md](./frontend/README.md).
 
-## Deployment
-
-Deployment docs: [deployment.md](./deployment.md).
-
 ## Development
 
 General development docs: [development.md](./development.md).
 
-This includes using Docker Compose, custom local domains, `.env` configurations, etc.
+This includes using local domains, `.env` configurations, etc.
 
-## Release Notes
+## Deployment
 
-Check the file [release-notes.md](./release-notes.md).
+Deployment docs: TBD
+
