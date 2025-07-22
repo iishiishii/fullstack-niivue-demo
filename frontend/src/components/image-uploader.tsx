@@ -1,56 +1,63 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { Upload, File } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { useState, useRef } from "react";
+import { Upload, File } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ImageUploaderProps {
-  onUpload: (files: File[]) => Promise<void>
-  compact?: boolean
+  onUpload: (files: File[]) => Promise<void>;
+  compact?: boolean;
 }
 
-export default function ImageUploader({ onUpload, compact = false }: ImageUploaderProps) {
-  const [isDragging, setIsDragging] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export default function ImageUploader({
+  onUpload,
+  compact = false,
+}: ImageUploaderProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
   const handleDragLeave = () => {
-    setIsDragging(false)
-  }
+    setIsDragging(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
+    e.preventDefault();
+    setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const files = Array.from(e.dataTransfer.files)
-      onUpload(files)
+      const files = Array.from(e.dataTransfer.files);
+      onUpload(files);
     }
-  }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      console.log("Files selected:", e.target.files)
-      const files = Array.from(e.target.files)
-      onUpload(files)
+      console.log("Files selected:", e.target.files);
+      const files = Array.from(e.target.files);
+      onUpload(files);
     }
-  }
+  };
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   if (compact) {
     return (
       <div className="w-full">
-        <Button variant="outline" className="w-full" onClick={handleButtonClick}>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleButtonClick}
+        >
           <Upload className="mr-2 h-4 w-4" />
           Upload Images
         </Button>
@@ -63,15 +70,17 @@ export default function ImageUploader({ onUpload, compact = false }: ImageUpload
           className="hidden"
         />
       </div>
-    )
+    );
   }
 
   return (
     <div
       className={cn(
         "border-2 border-dashed rounded-lg p-12 text-center transition-colors",
-        isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25",
-        "max-w-xl mx-auto w-full",
+        isDragging
+          ? "border-primary bg-primary/5"
+          : "border-muted-foreground/25",
+        "max-w-xl mx-auto w-full"
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -83,8 +92,12 @@ export default function ImageUploader({ onUpload, compact = false }: ImageUpload
         </div>
         <div className="grid gap-1 text-center">
           <h3 className="text-lg font-semibold">Upload Medical Images</h3>
-          <p className="text-sm text-muted-foreground">Drag and drop your medical images here or click to browse</p>
-          <p className="text-xs text-muted-foreground mt-2">Supported formats: NIfTI, GIfTI</p>
+          <p className="text-sm text-muted-foreground">
+            Drag and drop your medical images here or click to browse
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Supported formats: NIfTI, GIfTI
+          </p>
         </div>
         <Button onClick={handleButtonClick}>
           <Upload className="mr-2 h-4 w-4" />
@@ -99,5 +112,5 @@ export default function ImageUploader({ onUpload, compact = false }: ImageUpload
         />
       </div>
     </div>
-  )
+  );
 }

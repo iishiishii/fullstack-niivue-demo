@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { PanelLeft, PanelRight, Send, ImageIcon } from "lucide-react";
+import { useRef, useState } from "react";
+import { PanelLeft, PanelRight, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,20 +9,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import ViewSelector from "@/components/view-selector";
-import ProcessingHistory, {
-  type ProcessingHistoryItem,
-} from "@/components/processing-history";
+import ProcessingHistory from "@/components/processing-history";
 import { cn } from "@/lib/utils";
-import { useRef } from "react";
-import { DocumentData, Niivue, NVDocument, NVImage } from "@niivue/niivue";
-
+import { DocumentData, Niivue, NVImage } from "@niivue/niivue";
+import ProcessScene from "./Scenes/ProcessScene";
 import ImageUploader from "./image-uploader";
 import ImageCanvas from "./image-canvas";
 import { sliceTypeMap } from "./image-canvas";
 import { ViewMode } from "./view-selector";
-import { v4 as uuidv4 } from "uuid";
 
-type ImageFile = {
+export type ImageFile = {
   id: string;
   name: string;
   selected: boolean;
@@ -50,9 +46,6 @@ export default function MedicalImageProcessor() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
-  const [processingHistory, setProcessingHistory] = useState<
-    ProcessingHistoryItem[]
-  >([]);
   const [viewMode, setViewMode] = useState<
     "axial" | "coronal" | "sagittal" | "multi" | "render"
   >("axial");
@@ -116,128 +109,6 @@ export default function MedicalImageProcessor() {
     const nvdFile = await response.json();
     console.log(nvdFile);
     return nvdFile;
-  };
-
-  const handleProcessImages = () => {
-    const selectedImages = images.filter((img) => img.selected);
-    if (selectedImages.length === 0 || !selectedTool) {
-      alert("Please select at least one image and a processing tool");
-      return;
-    }
-
-    // Make a copy of the Niivue instance to avoid issues with state updates
-    const nvCopy = nvRef.current;
-    if (!nvCopy) return;
-
-    // Remove unselected volumes from Niivue (in reverse order to avoid index shift)
-    images
-      .map((img, idx) => ({ img, idx }))
-      .filter(({ img }) => !img.selected)
-      .reverse()
-      .forEach(({ idx }) => {
-        nvCopy.removeVolumeByIndex(idx);
-      });
-
-    // Create Partial DocumentData for selected images for processing request
-    const nvd: Partial<DocumentData> = {
-      title: uuidv4(),
-      imageOptionsArray: selectedImages.map((img) => ({
-        url: "",
-        name: img.name,
-        colormap: "gray",
-        opacity: 1,
-        id: img.id,
-      })),
-    };
-
-    console.log("NVDocument for processing:", nvd);
-    // Get the tool name from the processing tools array
-    const tool = processingTools.find((t) => t.id === selectedTool);
-
-    // Create a new history item
-    const historyItem: ProcessingHistoryItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      timestamp: new Date(),
-      nvDocument: nvd,
-      toolName: tool?.name || selectedTool,
-      status: "pending",
-    };
-
-    // Add to history
-    setProcessingHistory((prev) => [historyItem, ...prev]);
-
-    console.log(
-      "Processing images:",
-      selectedImages,
-      "with tool:",
-      selectedTool
-    );
-
-    // Simulate processing with a timeout
-    setTimeout(async () => {
-      try {
-        const doc = await fetchScene();
-        console.log("Processing scene URL:", doc);
-        const resultDocument = await NVDocument.loadFromJSON(doc);
-        await resultDocument.fetchLinkedData();
-
-        setProcessingHistory((prev) =>
-          prev.map((item) =>
-            item.id === historyItem.id
-              ? { ...item, status: "completed", result: resultDocument }
-              : item
-          )
-        );
-      } catch (error) {
-        console.error("Processing failed:", error);
-        setProcessingHistory((prev) =>
-          prev.map((item) =>
-            item.id === historyItem.id
-              ? {
-                  ...item,
-                  status: "failed",
-                  error:
-                    error && typeof error === "object" && "message" in error
-                      ? (error as { message: string }).message
-                      : String(error),
-                }
-              : item
-          )
-        );
-      }
-    }, 9000);
-  };
-
-  // Implement viewing the result
-  const handleViewResult = async (item: ProcessingHistoryItem) => {
-    console.log("Viewing result for", item);
-    if (!item.result) {
-      alert("No result available for this item");
-      return;
-    }
-    console.log("Loading volumes for result", item.result);
-    if (!nvRef.current) {
-      alert("Niivue instance is not available");
-      return;
-    }
-    if (item.error) {
-      alert(`Process returned error message ${item.error}`);
-    }
-    if (item.result.imageOptionsArray!.length === 0) {
-      alert("No image options available in the result");
-      return;
-    }
-    await nvRef.current?.loadVolumes(item.result.imageOptionsArray!);
-  };
-
-  const handleDeleteHistoryItem = (id: string) => {
-    setProcessingHistory((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleClearHistory = () => {
-    if (confirm("Are you sure you want to clear all processing history?")) {
-      setProcessingHistory([]);
-    }
   };
 
   const handleViewMode = (mode: ViewMode) => {
@@ -334,11 +205,11 @@ export default function MedicalImageProcessor() {
                   className="data-[state=active]:bg-muted"
                 >
                   History
-                  {processingHistory.length > 0 && (
+                  {/* {processingHistory.length > 0 && (
                     <span className="ml-1 rounded-full bg-primary w-5 h-5 text-[10px] flex items-center justify-center text-primary-foreground">
                       {processingHistory.length}
                     </span>
-                  )}
+                  )} */}
                 </TabsTrigger>
               </TabsList>
 
@@ -415,24 +286,16 @@ export default function MedicalImageProcessor() {
               </TabsContent>
 
               <TabsContent value="history" className="flex-1 p-0">
-                <ProcessingHistory
-                  history={processingHistory}
-                  onViewResult={handleViewResult}
-                  onDeleteItem={handleDeleteHistoryItem}
-                  onClearHistory={handleClearHistory}
-                />
+                <ProcessingHistory nvRef={nvRef} />
               </TabsContent>
             </Tabs>
 
             <div className="border-t p-4 bg-background">
-              <Button
-                className="w-full"
-                onClick={handleProcessImages}
-                disabled={!images.some((img) => img.selected) || !selectedTool}
-              >
-                <Send className="mr-2 h-4 w-4" />
-                Process Selected Images
-              </Button>
+              <ProcessScene
+                nvRef={nvRef}
+                images={images.filter((img) => img.selected)}
+                selectedTool={selectedTool}
+              />
             </div>
           </aside>
         )}

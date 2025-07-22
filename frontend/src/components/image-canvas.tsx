@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useContext } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Niivue, NVImage } from "@niivue/niivue";
 
 interface ImageCanvasProps {

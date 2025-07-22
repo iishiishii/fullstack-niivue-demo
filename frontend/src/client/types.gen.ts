@@ -4,13 +4,22 @@ export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
 
+export type Message = {
+    message: string;
+};
+
+/**
+ * Enum for scene processing status values.
+ */
+export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
 export type SceneCreate = {
     timestamp?: string;
     nv_document: {
         [key: string]: unknown;
     };
     tool_name: string;
-    status?: string;
+    status?: ProcessingStatus;
     result?: ({
     [key: string]: unknown;
 } | null);
@@ -23,7 +32,7 @@ export type ScenePublic = {
         [key: string]: unknown;
     };
     tool_name: string;
-    status?: string;
+    status?: ProcessingStatus;
     result?: ({
     [key: string]: unknown;
 } | null);
@@ -36,6 +45,19 @@ export type ScenesPublic = {
     count: number;
 };
 
+export type SceneUpdate = {
+    timestamp?: string;
+    nv_document: {
+        [key: string]: unknown;
+    };
+    tool_name?: (string | null);
+    status?: (ProcessingStatus | null);
+    result: ({
+    [key: string]: unknown;
+} | null);
+    error?: (string | null);
+};
+
 export type ValidationError = {
     loc: Array<(string | number)>;
     msg: string;
@@ -43,18 +65,18 @@ export type ValidationError = {
 };
 
 export type ScenesReadScenesData = {
-    limit?: number;
-    skip?: number;
-    status?: (string | null);
+    status?: (ProcessingStatus | null);
 };
 
 export type ScenesReadScenesResponse = (ScenesPublic);
 
-export type ScenesCreateAndProcessSceneData = {
+export type ScenesCreateSceneData = {
     requestBody: SceneCreate;
 };
 
-export type ScenesCreateAndProcessSceneResponse = (ScenePublic);
+export type ScenesCreateSceneResponse = (ScenePublic);
+
+export type ScenesDeleteAllScenesResponse = (Message);
 
 export type ScenesReadSceneData = {
     id: string;
@@ -62,10 +84,17 @@ export type ScenesReadSceneData = {
 
 export type ScenesReadSceneResponse = (ScenePublic);
 
-export type ScenesCreateSceneData = {
-    requestBody: SceneCreate;
+export type ScenesCreateAndProcessSceneData = {
+    id: string;
+    requestBody: SceneUpdate;
 };
 
-export type ScenesCreateSceneResponse = (ScenePublic);
+export type ScenesCreateAndProcessSceneResponse = (ScenePublic);
+
+export type ScenesDeleteSceneData = {
+    id: string;
+};
+
+export type ScenesDeleteSceneResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);

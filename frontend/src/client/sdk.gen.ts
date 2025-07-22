@@ -3,15 +3,13 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ScenesService {
     /**
      * Read Scenes
      * Get scenes with optional filtering by status.
      * @param data The data for the request.
-     * @param data.skip
-     * @param data.limit
      * @param data.status
      * @returns ScenesPublic Successful Response
      * @throws ApiError
@@ -21,8 +19,6 @@ export class ScenesService {
             method: 'GET',
             url: '/api/v1/scenes/',
             query: {
-                skip: data.skip,
-                limit: data.limit,
                 status: data.status
             },
             errors: {
@@ -32,14 +28,14 @@ export class ScenesService {
     }
     
     /**
-     * Create And Process Scene
-     * Create a new scene and process images using niimath operation.
+     * Create Scene
+     * Create a new scene without processing.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ScenePublic Successful Response
      * @throws ApiError
      */
-    public static createAndProcessScene(data: ScenesCreateAndProcessSceneData): CancelablePromise<ScenesCreateAndProcessSceneResponse> {
+    public static createScene(data: ScenesCreateSceneData): CancelablePromise<ScenesCreateSceneResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/scenes/',
@@ -48,6 +44,19 @@ export class ScenesService {
             errors: {
                 422: 'Validation Error'
             }
+        });
+    }
+    
+    /**
+     * Delete All Scenes
+     * Delete all scenes.
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteAllScenes(): CancelablePromise<ScenesDeleteAllScenesResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/scenes/'
         });
     }
     
@@ -73,19 +82,44 @@ export class ScenesService {
     }
     
     /**
-     * Create Scene
-     * Create a new scene without processing.
+     * Create And Process Scene
+     * Update a scene with processing tool and process images using niimath operation.
      * @param data The data for the request.
+     * @param data.id
      * @param data.requestBody
      * @returns ScenePublic Successful Response
      * @throws ApiError
      */
-    public static createScene(data: ScenesCreateSceneData): CancelablePromise<ScenesCreateSceneResponse> {
+    public static createAndProcessScene(data: ScenesCreateAndProcessSceneData): CancelablePromise<ScenesCreateAndProcessSceneResponse> {
         return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/scenes/create',
+            method: 'PUT',
+            url: '/api/v1/scenes/{id}',
+            path: {
+                id: data.id
+            },
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Scene
+     * Delete an scene.
+     * @param data The data for the request.
+     * @param data.id
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteScene(data: ScenesDeleteSceneData): CancelablePromise<ScenesDeleteSceneResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/scenes/{id}',
+            path: {
+                id: data.id
+            },
             errors: {
                 422: 'Validation Error'
             }

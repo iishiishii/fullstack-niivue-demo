@@ -56,3 +56,8 @@ class ScenePublic(SceneBase):
 class ScenesPublic(SQLModel):
     data: list[ScenePublic]
     count: int
+
+# Generic message
+class Message(SQLModel):
+    message: str
+

@@ -4,46 +4,39 @@ import {
   CheckCircle,
   XCircle,
   Hourglass,
-  Eye,
   Download,
   RefreshCcw,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { DocumentData } from "@niivue/niivue";
-
-export type ProcessingStatus =
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed";
-
-export interface ProcessingHistoryItem {
-  id: string;
-  timestamp: Date;
-  nvDocument: Partial<DocumentData>;
-  toolName: string;
-  status: ProcessingStatus;
-  result?: Partial<DocumentData>;
-  error?: string;
-}
+import ViewResult from "@/components/Scenes/ViewResult";
+import { ScenesService, type ProcessingStatus } from "@/client";
+import { Niivue } from "@niivue/niivue";
+import DeleteScene from "@/components/Scenes/DeleteScene";
+import DeleteAllScenes from "./Scenes/DeleteallScenes";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProcessingHistoryProps {
-  history: ProcessingHistoryItem[];
-  onViewResult?: (item: ProcessingHistoryItem) => void;
-  onDeleteItem?: (id: string) => void;
-  onClearHistory?: () => void;
+  nvRef: React.RefObject<Niivue>;
 }
 
-export default function ProcessingHistory({
-  history,
-  onViewResult,
-  onDeleteItem,
-  onClearHistory,
-}: ProcessingHistoryProps) {
-  const formatDate = (date: Date) => {
+function getItemsQueryOptions() {
+  return {
+    queryFn: () => ScenesService.readScenes(),
+    queryKey: ["scenes"],
+  };
+}
+
+export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
+  const { data, isLoading, isPlaceholderData } = useQuery({
+    ...getItemsQueryOptions(),
+    placeholderData: (prevData) => prevData,
+  });
+  const history = data?.data ?? [];
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
@@ -73,7 +66,7 @@ export default function ProcessingHistory({
             variant="outline"
             className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
           >
-            Processing
+            Pending
           </Badge>
         );
       case "processing":
@@ -107,7 +100,7 @@ export default function ProcessingHistory({
     }
   };
 
-  if (history.length === 0) {
+  if (history?.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center text-muted-foreground">
         <Clock className="h-12 w-12 mb-4 opacity-20" />
@@ -123,12 +116,7 @@ export default function ProcessingHistory({
     <div className="flex flex-col h-full">
       <div className="p-4 flex items-center justify-between border-b">
         <h3 className="font-medium">Processing History</h3>
-        {history.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={onClearHistory}>
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear All
-          </Button>
-        )}
+        {history!.length > 0 && <DeleteAllScenes />}
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2">
@@ -137,18 +125,18 @@ export default function ProcessingHistory({
               <div className="rounded-lg border bg-card p-3">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center">
-                    {getStatusIcon(item.status)}
+                    {getStatusIcon(item.status as ProcessingStatus)}
                     <span className="ml-2 font-medium text-sm">
-                      {item.toolName}
+                      {item.tool_name}
                     </span>
                   </div>
-                  {getStatusBadge(item.status)}
+                  {getStatusBadge(item.status as ProcessingStatus)}
                 </div>
 
                 <div className="text-xs text-muted-foreground mb-2">
                   <span className="flex items-center">
                     <Clock className="h-3 w-3 mr-1 inline" />
-                    {formatDate(item.timestamp)}
+                    {formatDate(item.timestamp as string)}
                   </span>
                 </div>
 
@@ -159,15 +147,7 @@ export default function ProcessingHistory({
 
                 {item.status === "completed" && (
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => onViewResult && onViewResult(item)}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      View Result
-                    </Button>
+                    <ViewResult item={item} nvRef={nvRef} />
                     <Button variant="outline" size="sm" className="w-full">
                       <Download className="h-3 w-3 mr-1" />
                       Download
@@ -175,17 +155,7 @@ export default function ProcessingHistory({
                   </div>
                 )}
 
-                {item.status === "failed" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-red-500"
-                    onClick={() => onDeleteItem && onDeleteItem(item.id)}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Remove
-                  </Button>
-                )}
+                {item.status === "failed" && <DeleteScene id={item.id} />}
               </div>
             </div>
           ))}

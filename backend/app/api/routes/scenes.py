@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 import subprocess
-from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus
+from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus, Message
 from app.api.deps import SessionDep
 
 router = APIRouter(prefix="/scenes", tags=["scenes"])
@@ -12,16 +12,14 @@ router = APIRouter(prefix="/scenes", tags=["scenes"])
 @router.get("/", response_model=ScenesPublic)
 def read_scenes(
     session: SessionDep,
-    skip: int = 0,
-    limit: int = 100,
     status: ProcessingStatus | None = None,
-) -> ScenesPublic:
+) -> Any:
     """
     Get scenes with optional filtering by status.
     """
-    print(f"Fetching scenes with status: {status}, skip: {skip}, limit: {limit}")
+    # print(f"Fetching scenes with status: {status}, skip: {skip}, limit: {limit}")
     
-    query = select(Scene).offset(skip).limit(limit)
+    query = select(Scene).order_by(func.lower(Scene.nv_document['timestamp']))
     
     if status:
         query = query.where(Scene.status == status)
@@ -136,18 +134,28 @@ def create_scene(
     return scene
 
 
-# @router.delete("/{id}")
-# def delete_scene(
-#     session: SessionDep, id: uuid.UUID
-# ) -> Message:
-#     """
-#     Delete an scene.
-#     """
-#     scene = session.get(Scene, id)
-#     if not scene:
-#         raise HTTPException(status_code=404, detail="Scene not found")
-#     if not current_user.is_superuser and (scene.owner_id != current_user.id):
-#         raise HTTPException(status_code=400, detail="Not enough permissions")
-#     session.delete(scene)
-#     session.commit()
-#     return Message(message="Scene deleted successfully")
+@router.delete("/{id}")
+def delete_scene(
+    session: SessionDep, id: uuid.UUID
+) -> Message:
+    """
+    Delete an scene.
+    """
+    scene = session.get(Scene, id)
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scene not found")
+    session.delete(scene)
+    session.commit()
+    return Message(message="Scene deleted successfully")
+
+@router.delete("/")
+def delete_all_scenes(
+    session: SessionDep
+) -> Message:
+    """
+    Delete all scenes.
+    """
+    print("Deleting all scenes")
+    session.exec(select(Scene)).delete()
+    session.commit()
+    return Message(message="All scenes deleted successfully")
