@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 import subprocess
-from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate
+from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus
 from app.api.deps import SessionDep
 
 router = APIRouter(prefix="/scenes", tags=["scenes"])
@@ -14,7 +14,7 @@ def read_scenes(
     session: SessionDep,
     skip: int = 0,
     limit: int = 100,
-    status: str | None = None,
+    status: ProcessingStatus | None = None,
 ) -> ScenesPublic:
     """
     Get scenes with optional filtering by status.
@@ -24,8 +24,6 @@ def read_scenes(
     query = select(Scene).offset(skip).limit(limit)
     
     if status:
-        if not valid_status(status):
-            raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
         query = query.where(Scene.status == status)
     
     scenes = session.exec(query).all()
@@ -45,37 +43,31 @@ def read_scene(session: SessionDep, id: uuid.UUID) -> Any:
     return scene
 
 
-def valid_status(status: str) -> bool:
-    """
-    Check if the status is valid.
-    """
-    return status in ["pending", "processing", "completed", "failed"]
-
-
-@router.post("/", response_model=ScenePublic)
+@router.put("/{id}", response_model=ScenePublic)
 def create_and_process_scene(
-    *, session: SessionDep, scene_in: SceneCreate
+    *, session: SessionDep, id: uuid.UUID, scene_in: SceneUpdate
 ) -> Scene:
     """
-    Create a new scene and process images using niimath operation.
+    Update a scene with processing tool and process images using niimath operation.
     """
     print(f"Creating scene with tool: {scene_in.tool_name}")
+    scene = session.get(Scene, id)
     
-    # Validate status
-    if not valid_status(scene_in.status):
-        raise HTTPException(status_code=400, detail=f"Invalid status: {scene_in.status}")
-    
-    # Create the scene record in database
-    scene = Scene.model_validate(scene_in)
+    if not scene:
+        raise HTTPException(status_code=404, detail="Scene not found")
+
+    # Update the scene record in database
+    update_dict = scene_in.model_dump(exclude_unset=True)
+    scene.sqlmodel_update(update_dict)
     session.add(scene)
     session.commit()
     session.refresh(scene)
-    
+
     print(f"Running niimath on scene: {scene.nv_document}")
     
     try:
         # Process images if status is not just "pending"
-        if scene.status != "pending":
+        if scene.status != ProcessingStatus.PENDING:
             for image in scene.nv_document.get("imageOptionsArray", []):
                 if not image.get("url"):
                     raise HTTPException(status_code=400, detail="Image URL is required")
@@ -87,7 +79,7 @@ def create_and_process_scene(
                 else:
                     output_fn = image["url"] + "_ceil" + ".nii.gz"
                 
-                # niimath <input_file> -bandpass <low> <high> <sampling_rate>
+                # niimath <input_file> -ceil <output_file>
                 result = subprocess.run(
                     ["niimath", image["url"], "-ceil", output_fn], 
                     capture_output=True, text=True
@@ -96,7 +88,7 @@ def create_and_process_scene(
                 if result.returncode != 0:
                     error_msg = result.stderr or result.stdout or "Unknown niimath error"
                     print(f"Niimath error: {error_msg}")
-                    scene.status = "failed"
+                    scene.status = ProcessingStatus.FAILED
                     scene.error = error_msg
                     session.add(scene)
                     session.commit()
@@ -104,7 +96,7 @@ def create_and_process_scene(
                     raise HTTPException(status_code=500, detail=f"Niimath operation failed: {error_msg}")
             
             # Update scene with success status
-            scene.status = "completed"
+            scene.status = ProcessingStatus.COMPLETED
             scene.result = {"message": "Niimath operation completed successfully"}
         
         session.add(scene)
@@ -118,7 +110,7 @@ def create_and_process_scene(
     except Exception as e:
         # Handle unexpected errors
         print(f"Unexpected error: {str(e)}")
-        scene.status = "failed"
+        scene.status = ProcessingStatus.FAILED
         scene.error = str(e)
         session.add(scene)
         session.commit()
@@ -126,7 +118,7 @@ def create_and_process_scene(
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-@router.post("/create", response_model=ScenePublic)
+@router.post("/", response_model=ScenePublic)
 def create_scene(
     *, session: SessionDep, scene_in: SceneCreate
 ) -> Scene:

@@ -8,8 +8,6 @@ version = "0.1.0"
 
 [tasks.dev]
 cmd = """
-  cd ../frontend && \
-  npm run build && \
   cd ../backend && \
   fastapi dev app/main.py
 """
@@ -26,6 +24,10 @@ description = "Run database migrations"
 [tasks.migrate-auto]
 cmd = "alembic revision --autogenerate -m 'Auto-generated migration'"
 description = "Generate new migration from model changes"
+
+[tasks.serve]
+cmd = "fastapi run --host 0.0.0.0 --port 8000 app/main.py"
+description = "Run container development server"
 
 [dependencies]
 fastapi = ">=0.115.5,<0.116"
