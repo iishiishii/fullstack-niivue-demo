@@ -1,11 +1,14 @@
-FROM python:3.10
+FROM ubuntu:24.04
 
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app/
 
 # Install pixi
 # Ref: https://pixi.sh/latest/installation/
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://pixi.sh/install.sh | bash
 
 # Place executables in the environment at the front of the path
@@ -22,17 +25,10 @@ ENV PATH="/root/.pixi/bin:$PATH"
 
 # Install dependencies
 # Copy files needed for dependency installation first
-# RUN --mount=type=bind,source=pixi.lock,target=pixi.lock \
-#     --mount=type=bind,source=pixi.toml,target=pixi.toml \
-#     pixi install
-
 COPY ./pixi.toml ./pixi.lock ./alembic.ini /app/
 
 # Install dependencies using pixi
 RUN pixi install
-
-# Verify pixi tasks are available
-RUN pixi task list
 
 # Set up environment to use pixi
 # ENV PATH="/app/.pixi/envs/default/bin:$PATH"
