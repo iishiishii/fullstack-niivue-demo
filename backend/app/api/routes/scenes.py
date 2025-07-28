@@ -1,7 +1,7 @@
 import uuid
 from typing import Any
 from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
+from sqlmodel import func, select, delete
 import subprocess
 from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus, Message
 from app.api.deps import SessionDep
@@ -19,7 +19,7 @@ def read_scenes(
     """
     # print(f"Fetching scenes with status: {status}, skip: {skip}, limit: {limit}")
     
-    query = select(Scene).order_by(func.lower(Scene.nv_document['timestamp']))
+    query = select(Scene).order_by(Scene.timestamp.desc())
     
     if status:
         query = query.where(Scene.status == status)
@@ -156,6 +156,7 @@ def delete_all_scenes(
     Delete all scenes.
     """
     print("Deleting all scenes")
-    session.exec(select(Scene)).delete()
+    statement = delete(Scene)
+    session.exec(statement)
     session.commit()
     return Message(message="All scenes deleted successfully")
