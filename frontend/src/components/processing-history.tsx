@@ -14,7 +14,7 @@ import ViewResult from "@/components/Scenes/ViewResult";
 import { ScenesService, type ProcessingStatus } from "@/client";
 import { Niivue } from "@niivue/niivue";
 import DeleteScene from "@/components/Scenes/DeleteScene";
-import DeleteAllScenes from "./Scenes/DeleteallScenes";
+import DeleteAllScenes from "./Scenes/DeleteAllScenes";
 import { useQuery } from "@tanstack/react-query";
 
 interface ProcessingHistoryProps {
@@ -148,7 +148,7 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
                 {item.status === "completed" && (
                   <div className="flex gap-2">
                     <ViewResult item={item} nvRef={nvRef} />
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button variant="outline" size="sm" className="w-fit">
                       <Download className="h-3 w-3 mr-1" />
                       Download
                     </Button>

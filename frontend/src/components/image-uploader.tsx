@@ -6,18 +6,84 @@ import { useState, useRef } from "react";
 import { Upload, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { UploadService } from "@/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ImageUploaderProps {
   onUpload: (files: File[]) => Promise<void>;
+  onSetSceneId: (sceneId: string) => void;
   compact?: boolean;
+}
+
+interface UploadedFile {
+  original_name: string;
+  filename: string;
+  url: string;
+  size: number;
+}
+
+interface UploadResponse {
+  message: string;
+  files: UploadedFile[];
+  tool_name?: string;
 }
 
 export default function ImageUploader({
   onUpload,
+  onSetSceneId,
   compact = false,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [processingStatus, setProcessingStatus] = useState<
+    "idle" | "uploading" | "creating" | "processing" | "completed" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Use the combined upload + create scene endpoint
+  const uploadAndCreateSceneMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      console.log(
+        "Uploading files with generated client:",
+        files.map((f) => f.name)
+      );
+
+      // Method 1: Use generated client (proper way)
+      try {
+        return await UploadService.createSceneWithUploadedFiles({
+          formData: {
+            files: files, // This must be an array of File objects
+            scene_title: `Upload Scene - ${new Date().toLocaleString()}`,
+          },
+        });
+      } catch (clientError) {
+        console.error(
+          "Generated client failed, falling back to fetch:",
+          clientError
+        );
+      }
+    },
+    onSuccess: (scene) => {
+      console.log("Scene created with uploaded files:", scene);
+      setProcessingStatus("processing");
+      onSetSceneId(scene!.id);
+    },
+    onError: (error: any) => {
+      console.error("Combined upload error:", error);
+      setErrorMessage(
+        `Upload and scene creation failed: ${error.message || "Unknown error"}`
+      );
+      setProcessingStatus("error");
+    },
+  });
+
+  const startUploadWorkflow = (files: File[]) => {
+    setProcessingStatus("uploading");
+    setErrorMessage(null);
+
+    uploadAndCreateSceneMutation.mutate(files);
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -35,6 +101,7 @@ export default function ImageUploader({
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
       onUpload(files);
+      startUploadWorkflow(files);
     }
   };
 
@@ -43,6 +110,7 @@ export default function ImageUploader({
       console.log("Files selected:", e.target.files);
       const files = Array.from(e.target.files);
       onUpload(files);
+      startUploadWorkflow(files);
     }
   };
 

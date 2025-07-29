@@ -23,11 +23,7 @@ export default function ViewResult({ item, nvRef }: ViewResultProps) {
   // Implement viewing the result
   const handleViewResult = async (item: ScenePublic) => {
     console.log("Viewing result for", item);
-    if (!item.result) {
-      alert("No result available for this item");
-      return;
-    }
-    console.log("Loading volumes for result", item.result);
+
     if (!nvRef.current) {
       alert("Niivue instance is not available");
       return;
@@ -39,7 +35,22 @@ export default function ViewResult({ item, nvRef }: ViewResultProps) {
     //   alert("No image options available in the result");
     //   return;
     // }
-    // await nvRef.current?.loadVolumes(item.result.imageOptionsArray!);
+
+    if (Array.isArray(item.nv_document.imageOptionsArray)) {
+      for (const img of item.nv_document.imageOptionsArray) {
+        if (img.resultUrl) {
+          console.log("Loading volume from URL:", img.resultUrl);
+          await nvRef.current?.addVolumeFromUrl({
+            url: img.resultUrl,
+            name: img.resultUrl.split("/").pop(),
+          });
+        } else {
+          console.warn("Image option does not have a resultUrl:", img);
+        }
+      }
+    } else {
+      alert("No image options available in the result");
+    }
   };
 
   if (data !== undefined && !isLoading) {
@@ -47,7 +58,7 @@ export default function ViewResult({ item, nvRef }: ViewResultProps) {
       <Button
         variant="outline"
         size="sm"
-        className="w-full"
+        className="w-fit"
         onClick={() => handleViewResult(data)}
       >
         <Eye className="h-3 w-3 mr-1" />

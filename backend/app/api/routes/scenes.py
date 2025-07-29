@@ -2,10 +2,12 @@ import uuid
 from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select, delete
+from sqlalchemy.orm.attributes import flag_modified
 import subprocess
 from pathlib import Path
 from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus, Message
 from app.api.deps import SessionDep
+from app.api.routes.upload import get_file_url
 
 router = APIRouter(prefix="/scenes", tags=["scenes"])
 
@@ -93,7 +95,7 @@ def create_and_process_scene(
                 
                 # Build output filename in the same directory
                 input_path = Path(input_file_path)
-                output_filename = f"{input_path.stem}_ceil{input_path.suffix}"
+                output_filename = f"{input_path.stem.split('.')[0]}_ceil{''.join(input_path.suffixes)}"  # Join suffixes for .nii.gz or similar
                 output_file_path = input_path.parent / output_filename
                 
                 print(f"Processing: {input_file_path} -> {output_file_path}")
@@ -113,11 +115,17 @@ def create_and_process_scene(
                     session.commit()
                     session.refresh(scene)
                     raise HTTPException(status_code=500, detail=f"Niimath operation failed: {error_msg}")
-            
+                # Update image with result URL in nv_document
+                for img in scene.nv_document.get("imageOptionsArray", []):
+                    if img.get("url") == image["url"]:
+                        img["resultUrl"] = get_file_url(output_filename)
+                        print(f"Added resultUrl to image: {img['resultUrl']}")
+                        break
+                
+                # Tell SQLAlchemy the JSON field was modified
+                flag_modified(scene, "nv_document")
             # Update scene with success status and output url
             scene.status = ProcessingStatus.COMPLETED
-            scene.result = {"message": "Niimath operation completed successfully"}
-        
         session.add(scene)
         session.commit()
         session.refresh(scene)

@@ -21,6 +21,7 @@ import { ViewMode } from "./view-selector";
 export type ImageFile = {
   id: string;
   name: string;
+  file: File;
   selected: boolean;
 };
 
@@ -44,6 +45,7 @@ export default function MedicalImageProcessor() {
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(
     null
   );
+  const [sceneId, setSceneId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
@@ -52,6 +54,11 @@ export default function MedicalImageProcessor() {
   const nvRef = useRef<Niivue | null>(nv);
 
   const processingTools: ProcessingTool[] = [
+    {
+      id: "niimath",
+      name: "Niimath",
+      description: "Perform mathematical operations on images",
+    },
     {
       id: "segmentation",
       name: "Segmentation",
@@ -68,6 +75,7 @@ export default function MedicalImageProcessor() {
   let handleFileUpload = async (files: File[]) => {
     if (!nvRef.current) return;
     const nv = nvRef.current;
+
     files.forEach(async (file) => {
       const nvimage = await NVImage.loadFromFile({
         file: file,
@@ -79,6 +87,7 @@ export default function MedicalImageProcessor() {
       const newImage = {
         id: nvimage.id,
         name: nvimage.name,
+        file: file,
         selected: false,
       };
       setImages((prev) => [...prev, ...[newImage]]);
@@ -95,20 +104,6 @@ export default function MedicalImageProcessor() {
         img.id === id ? { ...img, selected: !img.selected } : img
       )
     );
-  };
-
-  // Define an async function to fetch Partial document
-  const fetchScene = async (): Promise<Partial<DocumentData>> => {
-    // Adjust the URL to match the backend endpoint you've set up.
-    const response = await fetch("/scene");
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    console.log("Response from /scene:", response);
-    // Assume the backend returns an array of scenes.
-    const nvdFile = await response.json();
-    console.log(nvdFile);
-    return nvdFile;
   };
 
   const handleViewMode = (mode: ViewMode) => {
@@ -160,7 +155,10 @@ export default function MedicalImageProcessor() {
           <div className="flex h-full flex-col">
             {currentImageIndex === null ? (
               <div className="flex h-full items-center justify-center">
-                <ImageUploader onUpload={handleFileUpload} />
+                <ImageUploader
+                  onUpload={handleFileUpload}
+                  onSetSceneId={setSceneId}
+                />
               </div>
             ) : (
               <div className="relative flex h-full flex-col">
@@ -183,7 +181,7 @@ export default function MedicalImageProcessor() {
         {sidebarOpen && (
           <aside
             className={cn(
-              "border-l bg-background w-80 overflow-hidden flex flex-col"
+              "border-l bg-background w-80 overflow-scroll flex flex-col"
             )}
           >
             <Tabs defaultValue="images">
@@ -294,6 +292,7 @@ export default function MedicalImageProcessor() {
               <ProcessScene
                 nvRef={nvRef}
                 images={images.filter((img) => img.selected)}
+                sceneId={sceneId}
                 selectedTool={selectedTool}
               />
             </div>

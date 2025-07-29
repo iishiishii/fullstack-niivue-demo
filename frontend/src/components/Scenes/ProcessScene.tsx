@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type SceneCreate, ScenesService } from "@/client";
+import { type SceneUpdate, ScenesService } from "@/client";
 import type { ApiError } from "@/client/core/ApiError";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -8,49 +8,33 @@ import { DocumentData, Niivue, NVDocument, NVImage } from "@niivue/niivue";
 import { ImageFile } from "@/components/image-processor";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
+import type { SceneCreate, ScenePublic } from "@/client/types.gen";
 
 interface ProcessSceneProps {
   nvRef: React.RefObject<Niivue>;
   images: ImageFile[];
+  sceneId: string | null;
   selectedTool: string | null;
 }
 
 export default function ProcessScene({
-  nvRef,
   images,
+  sceneId,
   selectedTool,
 }: ProcessSceneProps) {
   const [currentProcessing, setCurrentProcessing] =
     useState<SceneCreate | null>(null);
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (data: SceneCreate) =>
-      ScenesService.createScene({ requestBody: data }),
-    // onSuccess: () => {
-    //   setProcessingHistory((prev) =>
-    //     prev.map((item) =>
-    //       item.id === currentProcessing!.id
-    //         ? { ...item, status: "completed" }
-    //         : item
-    //     )
-    //   );
-    // },
-    // onError: (error: ApiError) => {
-    //   setProcessingHistory((prev) =>
-    //     prev.map((item) =>
-    //       item.id === currentProcessing!.id
-    //         ? {
-    //             ...item,
-    //             status: "failed",
-    //             error:
-    //               error && typeof error === "object" && "message" in error
-    //                 ? (error as { message: string }).message
-    //                 : String(error),
-    //           }
-    //         : item
-    //     )
-    //   );
-    // },
+    mutationFn: (data: SceneUpdate) =>
+      ScenesService.createAndProcessScene({ id: sceneId!, requestBody: data }),
+    onSuccess: () => {
+      setCurrentProcessing(null);
+    },
+    onError: (error: ApiError) => {
+      console.error("Error processing scene:", error);
+      alert(`Error processing scene: ${error.message}`);
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["scenes"] });
     },
@@ -62,72 +46,11 @@ export default function ProcessScene({
       alert("Please select at least one image and a processing tool");
       return;
     }
-
-    // Make a copy of the Niivue instance to avoid issues with state updates
-    const nvCopy = nvRef.current;
-    if (!nvCopy) return;
-
-    // Remove unselected volumes from Niivue (in reverse order to avoid index shift)
-    images
-      .map((img, idx) => ({ img, idx }))
-      .filter(({ img }) => !img.selected)
-      .reverse()
-      .forEach(({ idx }) => {
-        nvCopy.removeVolumeByIndex(idx);
-      });
-
-    // Create Partial DocumentData for selected images for processing request
-    const nvd: Partial<DocumentData> = {
-      title: uuidv4(),
-      imageOptionsArray: selectedImages.map((img) => ({
-        url: "",
-        name: img.name,
-        colormap: "gray",
-        opacity: 1,
-        id: img.id,
-      })),
-    };
-
-    console.log("NVDocument for processing:", nvd);
-
-    // Create a new history item
-    const historyItem: SceneCreate = {
-      nv_document: nvd as DocumentData,
+    console.log("Processing images:", selectedImages, selectedTool);
+    mutation.mutate({
       tool_name: selectedTool,
-      status: "pending",
-    };
-
-    // Set current processing item
-    setCurrentProcessing(historyItem);
-
-    mutation.mutate(historyItem);
-
-    console.log(
-      "Processing images:",
-      selectedImages,
-      "with tool:",
-      selectedTool
-    );
-
-    // Simulate processing with a timeout
-    // setTimeout(async () => {
-    //   try {
-    //     const doc = await fetchScene();
-    //     console.log("Processing scene URL:", doc);
-    //     const resultDocument = await NVDocument.loadFromJSON(doc);
-    //     await resultDocument.fetchLinkedData();
-
-    //     setProcessingHistory((prev) =>
-    //       prev.map((item) =>
-    //         item.id === historyItem.id
-    //           ? { ...item, status: "completed", result: resultDocument }
-    //           : item
-    //       )
-    //     );
-    //   } catch (error) {
-    //     console.error("Processing failed:", error);
-    //   }
-    // }, 9000);
+      status: "processing",
+    });
   };
 
   return (

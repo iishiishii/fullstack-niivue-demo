@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UploadListUploadedFilesResponse, UploadUploadFilesData, UploadUploadFilesResponse, UploadCreateSceneWithUploadedFilesData, UploadCreateSceneWithUploadedFilesResponse, UploadDeleteUploadedFileData, UploadDeleteUploadedFileResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ScenesService {
     /**
@@ -119,6 +119,86 @@ export class ScenesService {
             url: '/api/v1/scenes/{id}',
             path: {
                 id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class UploadService {
+    /**
+     * List Uploaded Files
+     * List all uploaded files.
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static listUploadedFiles(): CancelablePromise<UploadListUploadedFilesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/upload/files'
+        });
+    }
+    
+    /**
+     * Upload Files
+     * Upload multiple medical image files and return their URLs.
+     * This endpoint handles file storage and returns URLs that can be used
+     * with the scenes endpoints for processing.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static uploadFiles(data: UploadUploadFilesData): CancelablePromise<UploadUploadFilesResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/upload/files',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Scene With Uploaded Files
+     * Upload files and immediately create a scene with them.
+     * This is a convenience endpoint that combines file upload and scene creation.
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns ScenePublic Successful Response
+     * @throws ApiError
+     */
+    public static createSceneWithUploadedFiles(data: UploadCreateSceneWithUploadedFilesData): CancelablePromise<UploadCreateSceneWithUploadedFilesResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/upload/scene-with-files',
+            formData: data.formData,
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Uploaded File
+     * Delete an uploaded file from the server.
+     * @param data The data for the request.
+     * @param data.filename
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static deleteUploadedFile(data: UploadDeleteUploadedFileData): CancelablePromise<UploadDeleteUploadedFileResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/upload/files/{filename}',
+            path: {
+                filename: data.filename
             },
             errors: {
                 422: 'Validation Error'
