@@ -18,7 +18,7 @@ class ProcessingStatus(str, Enum):
 class SceneBase(SQLModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     nv_document: Dict[str, Any] = Field(sa_column=Column(JSON))
-    tool_name: str = Field(min_length=1, max_length=255)
+    tool_name: str | None = Field(default=None, max_length=255)
     status: ProcessingStatus = Field(
         default=ProcessingStatus.PENDING
     )  # Uses enum for type safety
@@ -33,6 +33,9 @@ class SceneCreate(SceneBase):
 
 # Properties to receive on scene update
 class SceneUpdate(SceneBase):
+    nv_document: Dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSON)
+    )  # Optional update to nv_document
     tool_name: str | None = Field(
         default=None, min_length=1, max_length=255
     )  # Optional update to tool name

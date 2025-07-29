@@ -3,10 +3,24 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select, delete
 import subprocess
+from pathlib import Path
 from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus, Message
 from app.api.deps import SessionDep
 
 router = APIRouter(prefix="/scenes", tags=["scenes"])
+
+# Upload directory (should match upload.py)
+UPLOAD_DIR = Path("/tmp/uploads")
+
+def url_to_file_path(url: str) -> str:
+    """Convert a file URL to local file path for processing."""
+    if url.startswith("http"):
+        # Extract filename from URL like: http://localhost:8000/static/uploads/uuid-filename.nii.gz
+        filename = url.split("/")[-1]
+        return str(UPLOAD_DIR / filename)
+    else:
+        # Assume it's already a file path or relative path
+        return url
 
 
 @router.get("/", response_model=ScenesPublic)
@@ -70,16 +84,23 @@ def create_and_process_scene(
                 if not image.get("url"):
                     raise HTTPException(status_code=400, detail="Image URL is required")
                 
-                # Build output filename
-                url_parts = image["url"].split(".")
-                if len(url_parts) > 1:
-                    output_fn = url_parts[0] + "_ceil." + ".".join(url_parts[1:])
-                else:
-                    output_fn = image["url"] + "_ceil" + ".nii.gz"
+                # Convert URL to local file path for niimath
+                input_file_path = url_to_file_path(image["url"])
+                
+                # Check if input file exists
+                if not Path(input_file_path).exists():
+                    raise HTTPException(status_code=400, detail=f"Input file not found: {input_file_path}")
+                
+                # Build output filename in the same directory
+                input_path = Path(input_file_path)
+                output_filename = f"{input_path.stem}_ceil{input_path.suffix}"
+                output_file_path = input_path.parent / output_filename
+                
+                print(f"Processing: {input_file_path} -> {output_file_path}")
                 
                 # niimath <input_file> -ceil <output_file>
                 result = subprocess.run(
-                    ["niimath", image["url"], "-ceil", output_fn], 
+                    ["niimath", input_file_path, "-ceil", str(output_file_path)], 
                     capture_output=True, text=True
                 )
                 
@@ -93,7 +114,7 @@ def create_and_process_scene(
                     session.refresh(scene)
                     raise HTTPException(status_code=500, detail=f"Niimath operation failed: {error_msg}")
             
-            # Update scene with success status
+            # Update scene with success status and output url
             scene.status = ProcessingStatus.COMPLETED
             scene.result = {"message": "Niimath operation completed successfully"}
         

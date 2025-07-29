@@ -1,7 +1,9 @@
 import sentry_sdk
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
+from pathlib import Path
 
 from app.api.main import api_router
 from app.core.config import settings
@@ -31,3 +33,8 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Mount static files for serving uploaded files
+UPLOAD_DIR = Path("/tmp/uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+app.mount("/static/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
