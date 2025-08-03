@@ -2,28 +2,30 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type SceneUpdate, ScenesService } from "@/client";
 import type { ApiError } from "@/client/core/ApiError";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-// import { ProcessingHistoryItem } from "@/components/processing-history";
-import { DocumentData, Niivue, NVDocument, NVImage } from "@niivue/niivue";
+import { Niivue } from "@niivue/niivue";
 import { ImageFile } from "@/components/image-processor";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-import type { SceneCreate, ScenePublic } from "@/client/types.gen";
+import type { SceneCreate } from "@/client/types.gen";
+import { type NiimathOperation } from "@/components/niimath-config";
 
 interface ProcessSceneProps {
   nvRef: React.RefObject<Niivue>;
   images: ImageFile[];
   sceneId: string | null;
   selectedTool: string | null;
+  niimathOperations: NiimathOperation[];
 }
 
 export default function ProcessScene({
   images,
   sceneId,
   selectedTool,
+  niimathOperations,
 }: ProcessSceneProps) {
   const [currentProcessing, setCurrentProcessing] =
     useState<SceneCreate | null>(null);
+
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (data: SceneUpdate) =>
@@ -40,6 +42,19 @@ export default function ProcessScene({
     },
   });
 
+  const generateNiimathCommand = (operations: NiimathOperation[]) => {
+    if (operations.length === 0) return "niimath input.nii output.nii";
+
+    const operationsStr = operations
+      .map((op) => {
+        const args = op.args.filter((arg) => arg.trim() !== "").join(" ");
+        return args ? `${op.operator} ${args}` : op.operator;
+      })
+      .join(" ");
+
+    return `niimath input.nii ${operationsStr} output.nii`;
+  };
+
   const handleProcessImages = () => {
     const selectedImages = images.filter((img) => img.selected);
     if (selectedImages.length === 0 || !selectedTool) {
@@ -47,6 +62,25 @@ export default function ProcessScene({
       return;
     }
     console.log("Processing images:", selectedImages, selectedTool);
+    // Special handling for niimath
+    if (selectedTool === "niimath" && niimathOperations.length === 0) {
+      alert("Please add at least one niimath operation");
+      return;
+    }
+
+    // Prepare parameters based on selected tool
+    let parameters: Record<string, any> = {};
+    if (selectedTool === "niimath") {
+      parameters = {
+        operations: niimathOperations.map((op) => ({
+          operator: op.operator,
+          args: op.args.filter((arg) => arg.trim() !== ""),
+          description: op.description,
+        })),
+        command: generateNiimathCommand(niimathOperations),
+      };
+    }
+
     mutation.mutate({
       tool_name: selectedTool,
       status: "processing",

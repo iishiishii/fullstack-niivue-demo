@@ -17,6 +17,9 @@ import ImageUploader from "./image-uploader";
 import ImageCanvas from "./image-canvas";
 import { sliceTypeMap } from "./image-canvas";
 import { ViewMode } from "./view-selector";
+import NiimathConfig, {
+  type NiimathOperation,
+} from "@/components/niimath-config";
 
 export type ImageFile = {
   id: string;
@@ -51,6 +54,9 @@ export default function MedicalImageProcessor() {
   const [viewMode, setViewMode] = useState<
     "axial" | "coronal" | "sagittal" | "multi" | "render"
   >("axial");
+  const [niimathOperations, setNiimathOperations] = useState<
+    NiimathOperation[]
+  >([]);
   const nvRef = useRef<Niivue | null>(nv);
 
   const processingTools: ProcessingTool[] = [
@@ -58,16 +64,6 @@ export default function MedicalImageProcessor() {
       id: "niimath",
       name: "Niimath",
       description: "Perform mathematical operations on images",
-    },
-    {
-      id: "segmentation",
-      name: "Segmentation",
-      description: "Segment different regions in the image",
-    },
-    {
-      id: "registration",
-      name: "Image Registration",
-      description: "Align multiple images",
     },
   ];
 
@@ -279,6 +275,14 @@ export default function MedicalImageProcessor() {
                         </div>
                       ))}
                     </RadioGroup>
+                    {selectedTool === "niimath" && (
+                      <div className="border-t pt-4">
+                        <NiimathConfig
+                          operations={niimathOperations}
+                          onOperationsChange={setNiimathOperations}
+                        />
+                      </div>
+                    )}
                   </div>
                 </ScrollArea>
               </TabsContent>
@@ -294,6 +298,7 @@ export default function MedicalImageProcessor() {
                 images={images.filter((img) => img.selected)}
                 sceneId={sceneId}
                 selectedTool={selectedTool}
+                niimathOperations={niimathOperations}
               />
             </div>
           </aside>
