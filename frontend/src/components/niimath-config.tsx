@@ -206,7 +206,7 @@ export default function NiimathConfig({
                 value={selectedOperator}
                 onValueChange={setSelectedOperator}
               >
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1 w-20">
                   <SelectValue placeholder="Select operator..." />
                 </SelectTrigger>
                 <SelectContent>
