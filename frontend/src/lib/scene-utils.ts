@@ -45,25 +45,10 @@ export const getImageCount = (item: ScenePublic): number => {
 };
 
 /**
- * Check if a scene has any images
- */
-export const hasImages = (item: ScenePublic): boolean => {
-  return getImageCount(item) > 0;
-};
-
-/**
  * Get display name for an image with multiple fallbacks
  */
 export const getImageDisplayName = (image: any, index: number = 0): string => {
-  const possibleNameKeys = [
-    "name",
-    "originalName",
-    "processedName",
-    "filename",
-    "title",
-    "displayName",
-    "label",
-  ];
+  const possibleNameKeys = ["name", "customData"];
 
   for (const key of possibleNameKeys) {
     const value = getImageProperty(image, key, "");
@@ -76,10 +61,79 @@ export const getImageDisplayName = (image: any, index: number = 0): string => {
 };
 
 /**
- * Get image ID with fallback to index-based ID
+ * Get original image ID (from url property)
  */
-export const getImageId = (image: any, index: number): string => {
-  return getImageProperty(image, "id", `image-${index}`);
+export const getOriginalImageId = (image: any, index: number = 0): string => {
+  const originalUrl = getImageProperty(image, "url", "");
+  if (originalUrl && typeof originalUrl === "string" && originalUrl.trim()) {
+    const id = originalUrl.split("/").pop()?.split(".")[0];
+    if (id && id.trim()) {
+      return `original_${id}`;
+    }
+  }
+  return `original_image_${index}`;
+};
+
+/**
+ * Get processed image ID (from resultUrl property)
+ */
+export const getProcessedImageId = (image: any, index: number = 0): string => {
+  const resultUrl = getImageProperty(image, "resultUrl", "");
+  if (resultUrl && typeof resultUrl === "string" && resultUrl.trim()) {
+    const id = resultUrl.split("/").pop()?.split(".")[0];
+    if (id && id.trim()) {
+      return `processed_${id}`;
+    }
+  }
+  return `processed_image_${index}`;
+};
+
+/**
+ * Get downloadable files for an image object
+ */
+export const getDownloadableFiles = (
+  image: any,
+  index: number = 0
+): Array<{
+  id: string;
+  type: "original" | "processed";
+  url: string;
+  filename: string;
+  displayName: string;
+}> => {
+  const files = [];
+
+  // Original file
+  const originalUrl = getImageProperty(image, "url", "");
+  if (originalUrl) {
+    const originalName = getImageProperty(image, "name", `image_${index + 1}`);
+    files.push({
+      id: getOriginalImageId(image, index),
+      type: "original" as const,
+      url: originalUrl,
+      filename: originalName,
+      displayName: `${originalName} (Original)`,
+    });
+  }
+
+  // Processed file (if exists)
+  const resultUrl = getImageProperty(image, "resultUrl", "");
+  if (resultUrl) {
+    const originalName = getImageProperty(image, "name", `image_${index + 1}`);
+    const processedName = originalName.includes(".")
+      ? originalName.replace(/(\.[^.]+)$/, "_processed$1")
+      : `${originalName}_processed`;
+
+    files.push({
+      id: getProcessedImageId(image, index),
+      type: "processed" as const,
+      url: resultUrl,
+      filename: processedName,
+      displayName: `${processedName} (Processed)`,
+    });
+  }
+
+  return files;
 };
 
 /**
