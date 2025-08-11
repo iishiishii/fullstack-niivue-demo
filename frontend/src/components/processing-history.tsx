@@ -2,20 +2,31 @@
 import {
   Clock,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   XCircle,
   Hourglass,
   Download,
   RefreshCcw,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import ViewResult from "@/components/Scenes/ViewResult";
-import { ScenesService, type ProcessingStatus } from "@/client";
+import { ScenePublic, ScenesService, type ProcessingStatus } from "@/client";
 import { Niivue } from "@niivue/niivue";
 import DeleteScene from "@/components/Scenes/DeleteScene";
 import DeleteAllScenes from "./Scenes/DeleteAllScenes";
+import DownloadDialog from "@/components/Scenes/DownloadScene";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface ProcessingHistoryProps {
   nvRef: React.RefObject<Niivue>;
@@ -29,6 +40,11 @@ function getItemsQueryOptions() {
 }
 
 export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] =
+    useState<ScenePublic | null>(null);
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getItemsQueryOptions(),
     placeholderData: (prevData) => prevData,
@@ -43,6 +59,16 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
       hour: "numeric",
       minute: "numeric",
     }).format(date);
+  };
+
+  const formatDuration = (startTime: string) => {
+    const endTime = new Date();
+    const duration = endTime.getTime() - new Date(startTime).getTime();
+    const seconds = Math.floor(duration / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
   };
 
   const getStatusIcon = (status: ProcessingStatus) => {
@@ -112,55 +138,345 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
     );
   }
 
+  const getProcessingMessage = (item: ScenePublic) => {
+    if (item.timestamp === undefined) {
+      return "Processing status unknown";
+    }
+
+    const imageCount = getImageCount(item);
+    const toolName = getSceneProperty(item, "tool_name", "Unknown Tool");
+
+    switch (item.status) {
+      case "pending":
+        return `Processing ${imageCount} image(s) with ${toolName}...`;
+      case "completed":
+        return `Successfully processed ${imageCount} image(s) in ${formatDuration(item.timestamp)}`;
+      case "failed":
+        return `Failed to process ${imageCount} image(s). Please check your inputs and try again.`;
+      default:
+        return "Processing status unknown";
+    }
+  };
+
+  const toggleExpanded = (itemId: string) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemId)) {
+      newExpanded.delete(itemId);
+    } else {
+      newExpanded.add(itemId);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const handleDownloadClick = (scene: ScenePublic) => {
+    setSelectedHistoryItem(scene);
+    setDownloadDialogOpen(true);
+  };
+
+  // Generic utility functions for safe property access
+  const getSceneProperty = (
+    item: ScenePublic,
+    key: string,
+    fallback: any = ""
+  ) => {
+    return (item as any)?.[key] ?? fallback;
+  };
+
+  const getImageProperty = (image: any, key: string, fallback: any = "") => {
+    return image?.[key] ?? fallback;
+  };
+
+  // Centralized function to safely get image array
+  const getImageArray = (item: ScenePublic): any[] => {
+    try {
+      const nvDocument = getSceneProperty(item, "nv_document", {});
+      const imageArray = nvDocument?.imageOptionsArray;
+      return Array.isArray(imageArray) ? imageArray : [];
+    } catch (error) {
+      console.warn("Error accessing imageOptionsArray:", error);
+      return [];
+    }
+  };
+
+  // Helper to get image count
+  const getImageCount = (item: ScenePublic): number => {
+    return getImageArray(item).length;
+  };
+
+  // Helper to check if item has images
+  const hasImages = (item: ScenePublic): boolean => {
+    return getImageCount(item) > 0;
+  };
+
+  // Get all searchable text from an item (including nested properties)
+  const getSearchableText = (item: ScenePublic): string[] => {
+    const searchableTexts: string[] = [];
+
+    // Add basic properties
+    const toolName = getSceneProperty(item, "tool_name", "");
+    const status = getSceneProperty(item, "status", "");
+    const sceneId = getSceneProperty(item, "id", "");
+    const error = getSceneProperty(item, "error", "");
+
+    if (toolName) searchableTexts.push(toolName);
+    if (status) searchableTexts.push(status);
+    if (sceneId) searchableTexts.push(sceneId);
+    if (error) searchableTexts.push(error);
+
+    // Add image-related searchable text using our safe helper
+    const imageArray = getImageArray(item);
+    imageArray.forEach((image) => {
+      // Try multiple possible name/identifier properties
+      const possibleNameKeys = [
+        "name",
+        "originalName",
+        "processedName",
+        "filename",
+        "title",
+        "displayName",
+        "label",
+        "id",
+        "identifier",
+      ];
+
+      possibleNameKeys.forEach((key) => {
+        const value = getImageProperty(image, key, "");
+        if (value && typeof value === "string") {
+          searchableTexts.push(value);
+        }
+      });
+
+      // Add other string properties from images
+      Object.keys(image || {}).forEach((key) => {
+        const value = image[key];
+        if (typeof value === "string" && value.trim()) {
+          searchableTexts.push(value);
+        }
+      });
+    });
+
+    // Add searchable text from result object if it exists
+    const result = getSceneProperty(item, "result", {});
+    if (result && typeof result === "object") {
+      Object.values(result).forEach((value) => {
+        if (typeof value === "string" && value.trim()) {
+          searchableTexts.push(value);
+        }
+      });
+    }
+
+    return searchableTexts.filter((text) => text.trim().length > 0);
+  };
+
+  // Filter history based on search query - now searches all available properties
+  const filteredHistory = history.filter((item) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+    const searchableTexts = getSearchableText(item);
+
+    // Search through all available text properties
+    return searchableTexts.some((text) => text.toLowerCase().includes(query));
+  });
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 flex items-center justify-between border-b">
-        <h3 className="font-medium">Processing History</h3>
-        {history!.length > 0 && <DeleteAllScenes />}
-      </div>
-      <ScrollArea className="flex-1">
-        <div className="p-2">
-          {history.map((item) => (
-            <div key={item.id} className="mb-3 last:mb-0">
-              <div className="rounded-lg border bg-card p-3">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center">
-                    {getStatusIcon(item.status as ProcessingStatus)}
-                    <span className="ml-2 font-medium text-sm">
-                      {item.tool_name}
-                    </span>
-                  </div>
-                  {getStatusBadge(item.status as ProcessingStatus)}
-                </div>
+    <>
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium">Processing History</h3>
+            {history!.length > 0 && <DeleteAllScenes />}
+          </div>
 
-                <div className="text-xs text-muted-foreground mb-2">
-                  <span className="flex items-center">
-                    <Clock className="h-3 w-3 mr-1 inline" />
-                    {formatDate(item.timestamp as string)}
-                  </span>
-                </div>
+          {/* Search Box */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by tool, images, status, scene ID, or any text..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
 
-                <div className="text-xs mb-3">
-                  <span className="text-muted-foreground">Scene: </span>
-                  <span>{item.id}</span>
-                </div>
-
-                {item.status === "completed" && (
-                  <div className="flex gap-2">
-                    <ViewResult item={item} nvRef={nvRef} />
-                    <Button variant="outline" size="sm" className="w-fit">
-                      <Download className="h-3 w-3 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                )}
-
-                {item.status === "failed" && <DeleteScene id={item.id} />}
-              </div>
+          {searchQuery && (
+            <div className="text-xs text-muted-foreground">
+              {filteredHistory.length} of {history.length} items match "
+              {searchQuery}"
             </div>
-          ))}
+          )}
         </div>
-      </ScrollArea>
-    </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2">
+            {filteredHistory.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-32 text-center text-muted-foreground">
+                <Search className="h-8 w-8 mb-2 opacity-20" />
+                <p className="text-sm">No items match your search</p>
+              </div>
+            ) : (
+              filteredHistory.map((item) => {
+                const isExpanded = expandedItems.has(item.id);
+
+                return (
+                  <div key={item.id} className="mb-3 last:mb-0">
+                    <div className="rounded-lg border bg-card">
+                      <Collapsible
+                        open={isExpanded}
+                        onOpenChange={() => toggleExpanded(item.id)}
+                      >
+                        <div className="p-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(item.status as ProcessingStatus)}
+                              <span className="ml-2 font-medium text-sm">
+                                {getSceneProperty(
+                                  item,
+                                  "tool_name",
+                                  "Unknown Tool"
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getStatusBadge(item.status as ProcessingStatus)}
+                              <CollapsibleTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                >
+                                  {isExpanded ? (
+                                    <ChevronUp className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronDown className="h-3 w-3" />
+                                  )}
+                                </Button>
+                              </CollapsibleTrigger>
+                            </div>
+                          </div>
+
+                          {/* Start time */}
+                          <div className="text-xs text-muted-foreground mb-2">
+                            <span className="flex items-center">
+                              <Clock className="h-3 w-3 mr-1 inline" />
+                              {formatDate(item.timestamp as string)}
+                            </span>
+                          </div>
+
+                          <div className="text-xs mb-3">
+                            <span className="text-muted-foreground">
+                              Processing ID:{" "}
+                            </span>
+                            <span>{item.id}</span>
+                          </div>
+
+                          {/* Quick Image Info */}
+                          <div className="flex items-center gap-2 text-xs mb-3">
+                            <div className="flex items-center gap-1">
+                              <span>
+                                {getImageCount(item)} image
+                                {getImageCount(item) !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                {formatDuration(item.timestamp as string)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          {item.status === "completed" && (
+                            <div className="flex gap-2">
+                              <ViewResult item={item} nvRef={nvRef} />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-fit"
+                                onClick={() => handleDownloadClick(item)}
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Download
+                              </Button>
+                            </div>
+                          )}
+
+                          {item.status === "failed" && (
+                            <DeleteScene id={item.id} />
+                          )}
+                        </div>
+
+                        {/* Expanded Content */}
+                        <CollapsibleContent>
+                          <div className="border-t p-3 space-y-3">
+                            {/* Selected Images Details */}
+                            <div>
+                              <h4 className="text-xs font-medium mb-2">
+                                Selected Images:
+                              </h4>
+                              <div className="space-y-1">
+                                {(() => {
+                                  const imageArray = getImageArray(item);
+                                  return imageArray.length > 0 ? (
+                                    imageArray.map((imageObject, index) => (
+                                      <div
+                                        key={index}
+                                        className="flex items-center gap-2 text-xs"
+                                      >
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                        <span className="truncate">
+                                          {getImageProperty(
+                                            imageObject,
+                                            "name",
+                                            `Image ${index + 1}`
+                                          )}
+                                        </span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      No images available
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+
+                            {/* Processing Message */}
+                            <div className="text-xs mb-3 p-2 bg-muted/50 rounded text-muted-foreground">
+                              {getProcessingMessage(item)}
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {/* Show message when search returns no results */}
+            {searchQuery && filteredHistory.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <Search className="h-12 w-12 mb-4 opacity-20" />
+                <h3 className="text-lg font-medium mb-2">No results found</h3>
+                <p className="text-sm">
+                  Try searching with different keywords or clear the search to
+                  see all items.
+                </p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Download Dialog */}
+      <DownloadDialog
+        open={downloadDialogOpen}
+        onOpenChange={setDownloadDialogOpen}
+        item={selectedHistoryItem ? selectedHistoryItem : ({} as ScenePublic)}
+      />
+    </>
   );
 }

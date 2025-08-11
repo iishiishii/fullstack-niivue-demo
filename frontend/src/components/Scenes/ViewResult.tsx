@@ -5,7 +5,7 @@ import { Eye } from "lucide-react";
 import { type ScenePublic } from "@/client";
 import { Niivue } from "@niivue/niivue";
 
-function getResult({ id }: { id: string }) {
+export function getScene({ id }: { id: string }) {
   return {
     queryFn: () => ScenesService.readScene({ id: id }),
     queryKey: ["scenes", { id }],
@@ -18,26 +18,26 @@ interface ViewResultProps {
 }
 
 export default function ViewResult({ item, nvRef }: ViewResultProps) {
-  const { data, isLoading, isError } = useQuery(getResult({ id: item.id }));
+  const { data, isLoading, isError } = useQuery(getScene({ id: item.id }));
 
   // Implement viewing the result
-  const handleViewResult = async (item: ScenePublic) => {
-    console.log("Viewing result for", item);
+  const handleViewResult = async (scene: ScenePublic) => {
+    console.log("Viewing result for", scene);
 
     if (!nvRef.current) {
       alert("Niivue instance is not available");
       return;
     }
-    if (item.error) {
-      alert(`Process returned error message ${item.error}`);
+    if (scene.error) {
+      alert(`Process returned error message ${scene.error}`);
     }
-    // if (item.result.imageOptionsArray!.length === 0) {
+    // if (scene.result.imageOptionsArray!.length === 0) {
     //   alert("No image options available in the result");
     //   return;
     // }
 
-    if (Array.isArray(item.nv_document.imageOptionsArray)) {
-      for (const img of item.nv_document.imageOptionsArray) {
+    if (Array.isArray(scene.nv_document.imageOptionsArray)) {
+      for (const img of scene.nv_document.imageOptionsArray) {
         if (img.resultUrl) {
           console.log("Loading volume from URL:", img.resultUrl);
           await nvRef.current?.addVolumeFromUrl({
