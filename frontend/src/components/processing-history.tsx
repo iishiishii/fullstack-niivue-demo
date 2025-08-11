@@ -27,6 +27,16 @@ import DeleteAllScenes from "./Scenes/DeleteAllScenes";
 import DownloadDialog from "@/components/Scenes/DownloadScene";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import {
+  formatDate,
+  formatDuration,
+  getSceneProperty,
+  getImageProperty,
+  getImageArray,
+  getImageCount,
+  getSearchableText,
+  getProcessingMessage,
+} from "@/lib/scene-utils";
 
 interface ProcessingHistoryProps {
   nvRef: React.RefObject<Niivue>;
@@ -50,26 +60,6 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
     placeholderData: (prevData) => prevData,
   });
   const history = data?.data ?? [];
-
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric",
-    }).format(date);
-  };
-
-  const formatDuration = (startTime: string) => {
-    const endTime = new Date();
-    const duration = endTime.getTime() - new Date(startTime).getTime();
-    const seconds = Math.floor(duration / 1000);
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
 
   const getStatusIcon = (status: ProcessingStatus) => {
     switch (status) {
@@ -138,26 +128,6 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
     );
   }
 
-  const getProcessingMessage = (item: ScenePublic) => {
-    if (item.timestamp === undefined) {
-      return "Processing status unknown";
-    }
-
-    const imageCount = getImageCount(item);
-    const toolName = getSceneProperty(item, "tool_name", "Unknown Tool");
-
-    switch (item.status) {
-      case "pending":
-        return `Processing ${imageCount} image(s) with ${toolName}...`;
-      case "completed":
-        return `Successfully processed ${imageCount} image(s) in ${formatDuration(item.timestamp)}`;
-      case "failed":
-        return `Failed to process ${imageCount} image(s). Please check your inputs and try again.`;
-      default:
-        return "Processing status unknown";
-    }
-  };
-
   const toggleExpanded = (itemId: string) => {
     const newExpanded = new Set(expandedItems);
     if (newExpanded.has(itemId)) {
@@ -171,101 +141,6 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
   const handleDownloadClick = (scene: ScenePublic) => {
     setSelectedHistoryItem(scene);
     setDownloadDialogOpen(true);
-  };
-
-  // Generic utility functions for safe property access
-  const getSceneProperty = (
-    item: ScenePublic,
-    key: string,
-    fallback: any = ""
-  ) => {
-    return (item as any)?.[key] ?? fallback;
-  };
-
-  const getImageProperty = (image: any, key: string, fallback: any = "") => {
-    return image?.[key] ?? fallback;
-  };
-
-  // Centralized function to safely get image array
-  const getImageArray = (item: ScenePublic): any[] => {
-    try {
-      const nvDocument = getSceneProperty(item, "nv_document", {});
-      const imageArray = nvDocument?.imageOptionsArray;
-      return Array.isArray(imageArray) ? imageArray : [];
-    } catch (error) {
-      console.warn("Error accessing imageOptionsArray:", error);
-      return [];
-    }
-  };
-
-  // Helper to get image count
-  const getImageCount = (item: ScenePublic): number => {
-    return getImageArray(item).length;
-  };
-
-  // Helper to check if item has images
-  const hasImages = (item: ScenePublic): boolean => {
-    return getImageCount(item) > 0;
-  };
-
-  // Get all searchable text from an item (including nested properties)
-  const getSearchableText = (item: ScenePublic): string[] => {
-    const searchableTexts: string[] = [];
-
-    // Add basic properties
-    const toolName = getSceneProperty(item, "tool_name", "");
-    const status = getSceneProperty(item, "status", "");
-    const sceneId = getSceneProperty(item, "id", "");
-    const error = getSceneProperty(item, "error", "");
-
-    if (toolName) searchableTexts.push(toolName);
-    if (status) searchableTexts.push(status);
-    if (sceneId) searchableTexts.push(sceneId);
-    if (error) searchableTexts.push(error);
-
-    // Add image-related searchable text using our safe helper
-    const imageArray = getImageArray(item);
-    imageArray.forEach((image) => {
-      // Try multiple possible name/identifier properties
-      const possibleNameKeys = [
-        "name",
-        "originalName",
-        "processedName",
-        "filename",
-        "title",
-        "displayName",
-        "label",
-        "id",
-        "identifier",
-      ];
-
-      possibleNameKeys.forEach((key) => {
-        const value = getImageProperty(image, key, "");
-        if (value && typeof value === "string") {
-          searchableTexts.push(value);
-        }
-      });
-
-      // Add other string properties from images
-      Object.keys(image || {}).forEach((key) => {
-        const value = image[key];
-        if (typeof value === "string" && value.trim()) {
-          searchableTexts.push(value);
-        }
-      });
-    });
-
-    // Add searchable text from result object if it exists
-    const result = getSceneProperty(item, "result", {});
-    if (result && typeof result === "object") {
-      Object.values(result).forEach((value) => {
-        if (typeof value === "string" && value.trim()) {
-          searchableTexts.push(value);
-        }
-      });
-    }
-
-    return searchableTexts.filter((text) => text.trim().length > 0);
   };
 
   // Filter history based on search query - now searches all available properties
@@ -425,7 +300,7 @@ export default function ProcessingHistory({ nvRef }: ProcessingHistoryProps) {
                                         className="flex items-center gap-2 text-xs"
                                       >
                                         <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                                        <span className="truncate">
+                                        <span className="truncate w-3xs">
                                           {getImageProperty(
                                             imageObject,
                                             "name",
