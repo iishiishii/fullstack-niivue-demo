@@ -1,9 +1,50 @@
 import uuid
 from enum import Enum
 from sqlalchemy import JSON, Column
-from datetime import datetime, timezone
-from typing import Dict, Any
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 from sqlmodel import Field, SQLModel
+
+
+# https://jupyterhub.readthedocs.io/en/stable/_static/rest-api/index.html
+class Server(SQLModel):
+    name: str = Field(default=None, max_length=255)
+    ready: bool = False
+    pending: Optional[str] = Field(default=None, max_length=255)
+    url: str = Field(..., max_length=255)
+    progress_url: str = Field(..., max_length=255)
+    started: datetime = Field(...)
+    last_activity: datetime = Field(...)
+    state: Optional[Any] = Field(default=None)
+    user_options: Optional[Any]
+    scenes: list["Scene"] = Field(default_factory=list)
+
+class User(SQLModel):
+    name: str = Field(default=None, max_length=255)
+    admin: bool = False
+    groups: Optional[List[str]] = Field(default=None)
+    server: Optional[str] = Field(default=None)
+    pending: Optional[str] = Field(default=None)
+    last_activity: datetime = Field(default=None)
+    servers: Optional[Dict[str, Server]] = Field(default=None)
+    scopes: List[str] = Field(default_factory=list)
+
+
+# https://stackoverflow.com/questions/64501193/fastapi-how-to-use-httpexception-in-responses
+class AuthorizationError(SQLModel):
+    detail: str
+
+
+class HubResponse(SQLModel):
+    msg: str
+    request_url: str
+    token: str
+    response_code: int
+    hub_response: dict
+
+
+class HubApiError(SQLModel):
+    detail: HubResponse
 
 
 class ProcessingStatus(str, Enum):
@@ -42,7 +83,6 @@ class SceneUpdate(SceneBase):
     status: ProcessingStatus | None = Field(
         default=None
     )  # Optional update to status using enum
-    result: Dict[str, Any] | None = Field(sa_column=Column(JSON))
 
 
 # TODO: add owner_id to link scene to user

@@ -1,0 +1,13 @@
+{% extends "templates/login.html" %} {% set announcement = '' %} {% block main
+%}
+<div class="container text-center main">
+  <h1>{{ hub_title or 'Niivue' }}</h1>
+  <h2>{{ hub_subtitle }}</h2>
+  <p>
+    {% if welcome %} {{ (welcome | safe) }} {% else %} Welcome to Niivue. For
+    more information about Niivue, visit
+    <a href="https://niivue.com/">https://niivue.com/</a>. {% endif %}
+  </p>
+</div>
+
+{{ super() }} {% endblock main%}

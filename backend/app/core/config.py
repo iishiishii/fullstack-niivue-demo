@@ -14,7 +14,7 @@ from pydantic import (
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import Self
-
+import os
 
 def parse_cors(v: Any) -> list[str] | str:
     if isinstance(v, str) and not v.startswith("["):
@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         env_ignore_empty=True,
         extra="ignore",
     )
-    API_V1_STR: str = "/api/v1"
+    API_V1_STR: str = os.getenv("JUPYTERHUB_SERVICE_PREFIX", "").rstrip("/")
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
@@ -42,6 +42,7 @@ class Settings(BaseSettings):
         list[AnyUrl] | str, BeforeValidator(parse_cors)
     ] = []
 
+    PUBLIC_HOST: str = "http://localhost:8000"
     @computed_field  # type: ignore[prop-decorator]
     @property
     def all_cors_origins(self) -> list[str]:

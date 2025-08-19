@@ -50,3 +50,8 @@ $ alembic revision --autogenerate -m "Add column last_name to Scene model"
 ```console
 $ alembic upgrade head
 ```
+## Static File Serving
+
+The backend now serves uploaded files at `/static/uploads/` using FastAPI's StaticFiles.
+
+Files are stored in `/tmp/uploads/` and accessible via the static file endpoint.

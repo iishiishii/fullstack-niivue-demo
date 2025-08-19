@@ -4,3 +4,6 @@
 *.egg-info
 __pycache__
 htmlcov
+jupyterhub_cookie_secret
+jupyterhub.sqlite
+jupyterhub.sqlite*

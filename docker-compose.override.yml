@@ -57,11 +57,11 @@ services:
     build:
       context: ./backend
     # command: sleep infinity  # Infinite loop to keep container alive doing nothing
-    # Use the serve task from pixi.toml
+    # Use the jupyterhub task from pixi.toml
     command:
       - pixi
       - run
-      - serve
+      - jupyterhub
     develop:
       watch:
         - path: ./backend
@@ -87,15 +87,15 @@ services:
   #     - "1080:1080"
   #     - "1025:1025"
 
-  # frontend:
-  #   restart: "no"
-  #   ports:
-  #     - "5173:80"
-  #   build:
-  #     context: ./frontend
-  #     args:
-  #       - VITE_API_URL=http://localhost:8000
-  #       - NODE_ENV=development
+  frontend:
+    restart: "no"
+    ports:
+      - "5173:80"
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:8000
+        - NODE_ENV=development
 
   # playwright:
   #   build:

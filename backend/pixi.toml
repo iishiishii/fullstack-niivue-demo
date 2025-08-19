@@ -26,11 +26,16 @@ cmd = "alembic revision --autogenerate -m 'Auto-generated migration'"
 description = "Generate new migration from model changes"
 
 [tasks.serve]
-cmd = "fastapi run --host 0.0.0.0 --port 8000 app/main.py"
+cmd = "fastapi run --host=0.0.0.0 --port 10202 app/main.py"
 description = "Run container development server"
+
+[tasks.jupyterhub]
+cmd = "jupyterhub --ip=0.0.0.0 --config=jupyterhub_config.py"
+description = "Run JupyterHub with FastAPI service"
 
 [dependencies]
 fastapi = ">=0.115.5,<0.116"
+configurable-http-proxy = ">=5.0.1,<6"
 
 [pypi-dependencies]
 niimath = ">=1.0.20250529, <2"
@@ -40,3 +45,29 @@ pydantic-settings = ">=2.10.1, <3"
 psycopg = { version = ">=3.2.9, <4", extras = ["binary"] }
 alembic = ">=1.16.2, <2"
 alembic-postgresql-enum = ">=1.8.0, <2"
+
+async_generator = ">=1.9"
+importlib_metadata = ">=3.6"
+certipy = ">=0.1.2"
+idna = "*"
+jinja2 = ">=2.11.0"
+jupyter_events = "*"
+oauthlib = ">=3.0"
+packaging = "*"
+prometheus_client = ">=0.5.0"
+pydantic = ">=2"
+python-dateutil = "*"
+requests = "*"
+sqlalchemy = ">=1.4.1"
+tornado = ">=5.1"
+traitlets = ">=4.3.2"
+
+# Platform-specific dependencies
+[target.linux-64.dependencies]
+pamela = ">=1.1.0"
+
+[target.osx-arm64.dependencies]
+pamela = ">=1.1.0"
+
+[target.win-64.dependencies]
+psutil = ">=5.6.5"

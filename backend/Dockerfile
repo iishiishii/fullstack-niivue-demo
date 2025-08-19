@@ -1,4 +1,9 @@
-FROM ubuntu:24.04
+FROM quay.io/jupyterhub/jupyterhub
+
+# Create test user (PAM auth) and install single-user Jupyter
+RUN useradd testuser --create-home --shell /bin/bash
+RUN echo 'testuser:passwd' | chpasswd
+RUN pip install jupyter
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,14 +19,6 @@ RUN curl -fsSL https://pixi.sh/install.sh | bash
 # Place executables in the environment at the front of the path
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#using-the-environment
 ENV PATH="/root/.pixi/bin:$PATH"
-
-# Compile bytecode
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#compiling-bytecode
-# ENV UV_COMPILE_BYTECODE=1
-
-# uv Cache
-# Ref: https://docs.astral.sh/uv/guides/integration/docker/#caching
-# ENV UV_LINK_MODE=copy
 
 # Install dependencies
 # Copy files needed for dependency installation first
@@ -39,6 +36,11 @@ COPY ./scripts /app/scripts
 
 COPY ./app /app/app
 
+# Set up jupyterhub
+COPY jupyterhub_config.py /app/
+COPY ./templates /app/templates
+COPY ./static /app/static
+
 # Set environment variables for production
 ENV NIIVUE_BUILD_DIR="/app/static"
 ENV DATA_DIR="/app/data" 
@@ -46,4 +48,6 @@ ENV SCENE_SCHEMA_ID="niivue-fullstack-demo"
 ENV PYTHONPATH="/app"
 
 # Use the serve task for production
-CMD ["pixi", "run", "serve"]
+# CMD ["pixi", "run", "serve"]
+CMD ["pixi", "run", "jupyterhub"]
+
