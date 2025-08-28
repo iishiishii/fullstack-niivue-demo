@@ -3,7 +3,69 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UploadListUploadedFilesResponse, UploadUploadFilesData, UploadUploadFilesResponse, UploadCreateSceneWithUploadedFilesData, UploadCreateSceneWithUploadedFilesResponse, UploadDeleteUploadedFileData, UploadDeleteUploadedFileResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { HubLoginResponse, HubIndexResponse, HubMeResponse, HubDebugResponse, ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UploadListUploadedFilesResponse, UploadUploadFilesData, UploadUploadFilesResponse, UploadCreateSceneWithUploadedFilesData, UploadCreateSceneWithUploadedFilesResponse, UploadDeleteUploadedFileData, UploadDeleteUploadedFileResponse, UtilsHealthCheckResponse } from './types.gen';
+
+export class HubService {
+    /**
+     * Login
+     * Login via OAuth2
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static login(): CancelablePromise<HubLoginResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/services/fastapi/jhub-login'
+        });
+    }
+    
+    /**
+     * Index
+     * Non-authenticated function that returns {'Hello': 'World'}
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static index(): CancelablePromise<HubIndexResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/services/fastapi/'
+        });
+    }
+    
+    /**
+     * Me
+     * Authenticated function that returns the User model
+     * @returns User Successful Response
+     * @throws ApiError
+     */
+    public static me(): CancelablePromise<HubMeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/services/fastapi/me',
+            errors: {
+                400: 'Bad Request',
+                401: 'Unauthorized'
+            }
+        });
+    }
+    
+    /**
+     * Debug
+     * Authenticated function that returns a few pieces of debug
+     * * Environ of the service process
+     * * Request headers
+     * * User model
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static debug(): CancelablePromise<HubDebugResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/services/fastapi/debug'
+        });
+    }
+    
+}
 
 export class ScenesService {
     /**
@@ -17,7 +79,7 @@ export class ScenesService {
     public static readScenes(data: ScenesReadScenesData = {}): CancelablePromise<ScenesReadScenesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/scenes/',
+            url: '/services/fastapi/scenes/',
             query: {
                 status: data.status
             },
@@ -38,7 +100,7 @@ export class ScenesService {
     public static createScene(data: ScenesCreateSceneData): CancelablePromise<ScenesCreateSceneResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/scenes/',
+            url: '/services/fastapi/scenes/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -56,7 +118,7 @@ export class ScenesService {
     public static deleteAllScenes(): CancelablePromise<ScenesDeleteAllScenesResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/scenes/'
+            url: '/services/fastapi/scenes/'
         });
     }
     
@@ -71,7 +133,7 @@ export class ScenesService {
     public static readScene(data: ScenesReadSceneData): CancelablePromise<ScenesReadSceneResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/scenes/{id}',
+            url: '/services/fastapi/scenes/{id}',
             path: {
                 id: data.id
             },
@@ -93,7 +155,7 @@ export class ScenesService {
     public static createAndProcessScene(data: ScenesCreateAndProcessSceneData): CancelablePromise<ScenesCreateAndProcessSceneResponse> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/scenes/{id}',
+            url: '/services/fastapi/scenes/{id}',
             path: {
                 id: data.id
             },
@@ -116,7 +178,7 @@ export class ScenesService {
     public static deleteScene(data: ScenesDeleteSceneData): CancelablePromise<ScenesDeleteSceneResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/scenes/{id}',
+            url: '/services/fastapi/scenes/{id}',
             path: {
                 id: data.id
             },
@@ -138,7 +200,7 @@ export class UploadService {
     public static listUploadedFiles(): CancelablePromise<UploadListUploadedFilesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/upload/files'
+            url: '/services/fastapi/upload/files'
         });
     }
     
@@ -155,7 +217,7 @@ export class UploadService {
     public static uploadFiles(data: UploadUploadFilesData): CancelablePromise<UploadUploadFilesResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/upload/files',
+            url: '/services/fastapi/upload/files',
             formData: data.formData,
             mediaType: 'multipart/form-data',
             errors: {
@@ -176,7 +238,7 @@ export class UploadService {
     public static createSceneWithUploadedFiles(data: UploadCreateSceneWithUploadedFilesData): CancelablePromise<UploadCreateSceneWithUploadedFilesResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/upload/scene-with-files',
+            url: '/services/fastapi/upload/scene-with-files',
             formData: data.formData,
             mediaType: 'multipart/form-data',
             errors: {
@@ -196,7 +258,7 @@ export class UploadService {
     public static deleteUploadedFile(data: UploadDeleteUploadedFileData): CancelablePromise<UploadDeleteUploadedFileResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/upload/files/{filename}',
+            url: '/services/fastapi/upload/files/{filename}',
             path: {
                 filename: data.filename
             },
@@ -217,7 +279,7 @@ export class UtilsService {
     public static healthCheck(): CancelablePromise<UtilsHealthCheckResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/utils/health-check/'
+            url: '/services/fastapi/utils/health-check/'
         });
     }
     

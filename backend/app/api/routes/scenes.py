@@ -6,7 +6,7 @@ from sqlalchemy.orm.attributes import flag_modified
 import subprocess
 from pathlib import Path
 from app.models import Scene, SceneCreate, ScenePublic, ScenesPublic, SceneUpdate, ProcessingStatus, Message
-from app.api.deps import SessionDep
+from app.api.deps import CurrentUser, SessionDep
 from app.api.routes.upload import get_file_url
 
 router = APIRouter(prefix="/scenes", tags=["scenes"])
@@ -28,15 +28,16 @@ def url_to_file_path(url: str) -> str:
 @router.get("/", response_model=ScenesPublic)
 def read_scenes(
     session: SessionDep,
+    current_user: CurrentUser,
     status: ProcessingStatus | None = None,
 ) -> Any:
     """
     Get scenes with optional filtering by status.
     """
     # print(f"Fetching scenes with status: {status}, skip: {skip}, limit: {limit}")
-    
-    query = select(Scene).order_by(Scene.timestamp.desc())
-    
+
+    query = select(Scene).where(Scene.owner_id == current_user.id).order_by(Scene.timestamp.desc())
+
     if status:
         query = query.where(Scene.status == status)
     
@@ -46,7 +47,7 @@ def read_scenes(
 
 
 @router.get("/{id}", response_model=ScenePublic)
-def read_scene(session: SessionDep, id: uuid.UUID) -> Any:
+def read_scene(session: SessionDep, current_user: CurrentUser, id: uuid.UUID) -> Any:
     """
     Get scene by ID.
     """
@@ -54,12 +55,14 @@ def read_scene(session: SessionDep, id: uuid.UUID) -> Any:
     scene = session.get(Scene, id)
     if not scene:
         raise HTTPException(status_code=404, detail="Scene not found")
+    if (scene.owner_id != current_user.id):
+        raise HTTPException(status_code=400, detail="Not enough permissions")
     return scene
 
 
 @router.put("/{id}", response_model=ScenePublic)
 def create_and_process_scene(
-    *, session: SessionDep, id: uuid.UUID, scene_in: SceneUpdate
+    *, session: SessionDep, current_user: CurrentUser, id: uuid.UUID, scene_in: SceneUpdate
 ) -> Scene:
     """
     Update a scene with processing tool and process images using niimath operation.
@@ -69,7 +72,8 @@ def create_and_process_scene(
     
     if not scene:
         raise HTTPException(status_code=404, detail="Scene not found")
-
+    if (scene.owner_id != current_user.id):
+        raise HTTPException(status_code=400, detail="Not enough permissions")
     # Update the scene record in database
     update_dict = scene_in.model_dump(exclude_unset=True)
     scene.sqlmodel_update(update_dict)
@@ -147,7 +151,7 @@ def create_and_process_scene(
 
 @router.post("/", response_model=ScenePublic)
 def create_scene(
-    *, session: SessionDep, scene_in: SceneCreate
+    *, session: SessionDep, current_user: CurrentUser, scene_in: SceneCreate
 ) -> Scene:
     """
     Create a new scene without processing.
@@ -155,7 +159,7 @@ def create_scene(
     print(f"Creating scene with tool: {scene_in.tool_name}")
     
     # Create the scene record in database
-    scene = Scene.model_validate(scene_in)
+    scene = Scene.model_validate(scene_in, update={"owner_id": current_user.id})
     session.add(scene)
     session.commit()
     session.refresh(scene)
@@ -165,7 +169,7 @@ def create_scene(
 
 @router.delete("/{id}")
 def delete_scene(
-    session: SessionDep, id: uuid.UUID
+    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> Message:
     """
     Delete an scene.
@@ -173,19 +177,22 @@ def delete_scene(
     scene = session.get(Scene, id)
     if not scene:
         raise HTTPException(status_code=404, detail="Scene not found")
+    if (scene.owner_id != current_user.id):
+        raise HTTPException(status_code=400, detail="Not enough permissions")
     session.delete(scene)
     session.commit()
     return Message(message="Scene deleted successfully")
 
 @router.delete("/")
 def delete_all_scenes(
-    session: SessionDep
+    session: SessionDep,
+    current_user: CurrentUser
 ) -> Message:
     """
     Delete all scenes.
     """
     print("Deleting all scenes")
-    statement = delete(Scene)
+    statement = delete(Scene).where(Scene.owner_id == current_user.id)
     session.exec(statement)
     session.commit()
     return Message(message="All scenes deleted successfully")

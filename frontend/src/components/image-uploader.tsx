@@ -49,7 +49,6 @@ export default function ImageUploader({
         files.map((f) => f.name)
       );
 
-      // Method 1: Use generated client (proper way)
       try {
         return await UploadService.createSceneWithUploadedFiles({
           formData: {

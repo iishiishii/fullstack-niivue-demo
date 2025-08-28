@@ -15,13 +15,18 @@ const APP_BASE_URL = import.meta.env.VITE_APP_BASE_URL || "/";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/";
 OpenAPI.BASE = import.meta.env.VITE_API_URL;
 OpenAPI.TOKEN = async () => {
-  return localStorage.getItem("access_token") || "";
+  const token = localStorage.getItem("access_token") || "";
+  console.log(
+    "🔑 TOKEN being sent:",
+    token ? `${token.substring(0, 20)}...` : "NO TOKEN"
+  );
+  return token;
 };
 
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
     localStorage.removeItem("access_token");
-    window.location.href = "http://localhost:8000/hub/login";
+    window.location.href = "http://127.0.0.1:8000/hub/login";
   }
 };
 

@@ -5,7 +5,7 @@ from typing import List, Any
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
 from pathlib import Path
 from app.models import Scene, SceneCreate, ScenePublic, ProcessingStatus
-from app.api.deps import SessionDep
+from app.api.deps import CurrentUser, SessionDep
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -16,7 +16,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 ALLOWED_EXTENSIONS = {".nii", ".nii.gz", ".dcm", ".mgz", ".img", ".hdr"}
 
 # Get base URL from environment or use default
-BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 def get_file_url(filename: str, request: Request = None) -> str:
     """Generate file URL based on server configuration."""
@@ -104,6 +104,7 @@ async def upload_files(
 async def create_scene_with_uploaded_files(
     request: Request,
     session: SessionDep,
+    current_user: CurrentUser,
     files: List[UploadFile] = File(...),
     scene_title: str = Form(None)
 ) -> Scene:
@@ -133,8 +134,8 @@ async def create_scene_with_uploaded_files(
         nv_document=nv_document,
         status=ProcessingStatus.PENDING
     )
-    
-    scene = Scene.model_validate(scene_data)
+
+    scene = Scene.model_validate(scene_data, update={"owner_id": current_user.id})
     session.add(scene)
     session.commit()
     session.refresh(scene)
@@ -161,7 +162,8 @@ async def delete_uploaded_file(filename: str) -> dict:
         )
 
 @router.get("/files")
-async def list_uploaded_files(request: Request) -> dict:
+async def list_uploaded_files(request: Request, session: SessionDep,
+    current_user: CurrentUser) -> dict:
     """
     List all uploaded files.
     """

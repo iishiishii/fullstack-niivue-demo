@@ -20,11 +20,13 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
+    docs_url=settings.API_V1_STR + "/docs",
+    redoc_url=settings.API_V1_STR + "/redoc",
     ## Add our service client id to the /docs Authorize form automatically
-    swagger_ui_init_oauth={"clientId": os.environ["JUPYTERHUB_CLIENT_ID"]},
+    swagger_ui_init_oauth={"clientId": os.getenv("JUPYTERHUB_CLIENT_ID", "")},
     ## Default /docs/oauth2 redirect will cause Hub
     ## to raise oauth2 redirect uri mismatch errors
-    swagger_ui_oauth2_redirect_url=os.environ["JUPYTERHUB_OAUTH_CALLBACK_URL"],
+    swagger_ui_oauth2_redirect_url=os.getenv("JUPYTERHUB_OAUTH_CALLBACK_URL", "/"),
 )
 
 # Set all CORS enabled origins

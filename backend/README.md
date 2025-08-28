@@ -29,6 +29,12 @@ Modify or add SQLModel models for data and SQL tables in `./backend/app/models.p
 
 You should run the migrations with `alembic` commands and the migration code will be in your app directory. Make sure you create a "revision" of your models and that you "upgrade" your database with that revision every time you change them. As this is what will update the tables in your database. Otherwise, your application will have errors.
 
+* Start the app by running
+
+```console
+docker compose watch
+```
+
 * Activate the environment from backend directory
 
 ```console

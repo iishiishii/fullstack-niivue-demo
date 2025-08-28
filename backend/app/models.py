@@ -3,32 +3,30 @@ from enum import Enum
 from sqlalchemy import JSON, Column
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
-
-# https://jupyterhub.readthedocs.io/en/stable/_static/rest-api/index.html
-class Server(SQLModel):
-    name: str = Field(default=None, max_length=255)
-    ready: bool = False
-    pending: Optional[str] = Field(default=None, max_length=255)
-    url: str = Field(..., max_length=255)
-    progress_url: str = Field(..., max_length=255)
-    started: datetime = Field(...)
-    last_activity: datetime = Field(...)
-    state: Optional[Any] = Field(default=None)
-    user_options: Optional[Any]
-    scenes: list["Scene"] = Field(default_factory=list)
-
-class User(SQLModel):
+class UserBase(SQLModel):
     name: str = Field(default=None, max_length=255)
     admin: bool = False
-    groups: Optional[List[str]] = Field(default=None)
-    server: Optional[str] = Field(default=None)
+    groups: Optional[List[str]] = Field(default=None, sa_column=Column(JSON))
+    # server: Optional[str] = Field(default=None)
     pending: Optional[str] = Field(default=None)
     last_activity: datetime = Field(default=None)
-    servers: Optional[Dict[str, Server]] = Field(default=None)
-    scopes: List[str] = Field(default_factory=list)
+    scopes: List[str] = Field(default_factory=list, sa_column=Column(JSON))
 
+# Database model, database table inferred from class name
+class User(UserBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    hashed_password: str
+    scenes: list["Scene"] = Relationship(back_populates="owner", cascade_delete=True)
+
+# Properties to return via API, id is always required
+class UserPublic(UserBase):
+    id: uuid.UUID
+
+class UsersPublic(SQLModel):
+    data: list[UserPublic]
+    count: int
 
 # https://stackoverflow.com/questions/64501193/fastapi-how-to-use-httpexception-in-responses
 class AuthorizationError(SQLModel):
@@ -85,16 +83,19 @@ class SceneUpdate(SceneBase):
     )  # Optional update to status using enum
 
 
-# TODO: add owner_id to link scene to user
 # Database model, database table inferred from class name
 class Scene(SceneBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: User | None = Relationship(back_populates="scenes")
 
 
 # Properties to return via API, id is always required
 class ScenePublic(SceneBase):
     id: uuid.UUID
-
+    owner_id: uuid.UUID
 
 class ScenesPublic(SQLModel):
     data: list[ScenePublic]
