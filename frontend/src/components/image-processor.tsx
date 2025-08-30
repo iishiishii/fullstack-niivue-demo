@@ -20,6 +20,7 @@ import { ViewMode } from "./view-selector";
 import NiimathConfig, {
   type NiimathOperation,
 } from "@/components/niimath-config";
+import useAuth from "@/hooks/useAuth";
 
 export type ImageFile = {
   id: string;
@@ -58,7 +59,7 @@ export default function MedicalImageProcessor() {
     NiimathOperation[]
   >([]);
   const nvRef = useRef<Niivue | null>(nv);
-
+  const { logout } = useAuth();
   const processingTools: ProcessingTool[] = [
     {
       id: "niimath",
@@ -127,7 +128,13 @@ export default function MedicalImageProcessor() {
       <header className="border-b bg-background px-6 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Medical Image Processing</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {/* <div className="text-sm text-muted-foreground">
+              Welcome, {user.name}
+            </div> */}
+            <Button variant="outline" size="sm" onClick={logout}>
+              Sign Out
+            </Button>
             <Button
               variant="outline"
               size="sm"

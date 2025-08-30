@@ -3,19 +3,25 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { HubLoginResponse, HubIndexResponse, HubMeResponse, HubDebugResponse, ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UploadListUploadedFilesResponse, UploadUploadFilesData, UploadUploadFilesResponse, UploadCreateSceneWithUploadedFilesData, UploadCreateSceneWithUploadedFilesResponse, UploadDeleteUploadedFileData, UploadDeleteUploadedFileResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginIndexResponse, LoginDebugResponse, ScenesReadScenesData, ScenesReadScenesResponse, ScenesCreateSceneData, ScenesCreateSceneResponse, ScenesDeleteAllScenesResponse, ScenesReadSceneData, ScenesReadSceneResponse, ScenesCreateAndProcessSceneData, ScenesCreateAndProcessSceneResponse, ScenesDeleteSceneData, ScenesDeleteSceneResponse, UploadListUploadedFilesResponse, UploadUploadFilesData, UploadUploadFilesResponse, UploadCreateSceneWithUploadedFilesData, UploadCreateSceneWithUploadedFilesResponse, UploadDeleteUploadedFileData, UploadDeleteUploadedFileResponse, UsersReadUserMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersVerifyEmailData, UsersVerifyEmailResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UtilsHealthCheckResponse } from './types.gen';
 
-export class HubService {
+export class LoginService {
     /**
-     * Login
-     * Login via OAuth2
-     * @returns unknown Successful Response
+     * Login Access Token
+     * @param data The data for the request.
+     * @param data.formData
+     * @returns Token Successful Response
      * @throws ApiError
      */
-    public static login(): CancelablePromise<HubLoginResponse> {
+    public static loginAccessToken(data: LoginLoginAccessTokenData): CancelablePromise<LoginLoginAccessTokenResponse> {
         return __request(OpenAPI, {
-            method: 'GET',
-            url: '/services/fastapi/jhub-login'
+            method: 'POST',
+            url: '/api/v1/login/access-token',
+            formData: data.formData,
+            mediaType: 'application/x-www-form-urlencoded',
+            errors: {
+                422: 'Validation Error'
+            }
         });
     }
     
@@ -25,27 +31,10 @@ export class HubService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static index(): CancelablePromise<HubIndexResponse> {
+    public static index(): CancelablePromise<LoginIndexResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/services/fastapi/'
-        });
-    }
-    
-    /**
-     * Me
-     * Authenticated function that returns the User model
-     * @returns User Successful Response
-     * @throws ApiError
-     */
-    public static me(): CancelablePromise<HubMeResponse> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/services/fastapi/me',
-            errors: {
-                400: 'Bad Request',
-                401: 'Unauthorized'
-            }
+            url: '/api/v1/'
         });
     }
     
@@ -58,10 +47,10 @@ export class HubService {
      * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static debug(): CancelablePromise<HubDebugResponse> {
+    public static debug(): CancelablePromise<LoginDebugResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/services/fastapi/debug'
+            url: '/api/v1/debug'
         });
     }
     
@@ -79,7 +68,7 @@ export class ScenesService {
     public static readScenes(data: ScenesReadScenesData = {}): CancelablePromise<ScenesReadScenesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/services/fastapi/scenes/',
+            url: '/api/v1/scenes/',
             query: {
                 status: data.status
             },
@@ -100,7 +89,7 @@ export class ScenesService {
     public static createScene(data: ScenesCreateSceneData): CancelablePromise<ScenesCreateSceneResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/services/fastapi/scenes/',
+            url: '/api/v1/scenes/',
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -118,7 +107,7 @@ export class ScenesService {
     public static deleteAllScenes(): CancelablePromise<ScenesDeleteAllScenesResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/services/fastapi/scenes/'
+            url: '/api/v1/scenes/'
         });
     }
     
@@ -133,7 +122,7 @@ export class ScenesService {
     public static readScene(data: ScenesReadSceneData): CancelablePromise<ScenesReadSceneResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/services/fastapi/scenes/{id}',
+            url: '/api/v1/scenes/{id}',
             path: {
                 id: data.id
             },
@@ -155,7 +144,7 @@ export class ScenesService {
     public static createAndProcessScene(data: ScenesCreateAndProcessSceneData): CancelablePromise<ScenesCreateAndProcessSceneResponse> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/services/fastapi/scenes/{id}',
+            url: '/api/v1/scenes/{id}',
             path: {
                 id: data.id
             },
@@ -178,7 +167,7 @@ export class ScenesService {
     public static deleteScene(data: ScenesDeleteSceneData): CancelablePromise<ScenesDeleteSceneResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/services/fastapi/scenes/{id}',
+            url: '/api/v1/scenes/{id}',
             path: {
                 id: data.id
             },
@@ -200,7 +189,7 @@ export class UploadService {
     public static listUploadedFiles(): CancelablePromise<UploadListUploadedFilesResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/services/fastapi/upload/files'
+            url: '/api/v1/upload/files'
         });
     }
     
@@ -217,7 +206,7 @@ export class UploadService {
     public static uploadFiles(data: UploadUploadFilesData): CancelablePromise<UploadUploadFilesResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/services/fastapi/upload/files',
+            url: '/api/v1/upload/files',
             formData: data.formData,
             mediaType: 'multipart/form-data',
             errors: {
@@ -238,7 +227,7 @@ export class UploadService {
     public static createSceneWithUploadedFiles(data: UploadCreateSceneWithUploadedFilesData): CancelablePromise<UploadCreateSceneWithUploadedFilesResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/services/fastapi/upload/scene-with-files',
+            url: '/api/v1/upload/scene-with-files',
             formData: data.formData,
             mediaType: 'multipart/form-data',
             errors: {
@@ -258,9 +247,89 @@ export class UploadService {
     public static deleteUploadedFile(data: UploadDeleteUploadedFileData): CancelablePromise<UploadDeleteUploadedFileResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/services/fastapi/upload/files/{filename}',
+            url: '/api/v1/upload/files/{filename}',
             path: {
                 filename: data.filename
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class UsersService {
+    /**
+     * Read User Me
+     * Get current user.
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static readUserMe(): CancelablePromise<UsersReadUserMeResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/users/me'
+        });
+    }
+    
+    /**
+     * Register User
+     * Create new user without the need to be logged in.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static registerUser(data: UsersRegisterUserData): CancelablePromise<UsersRegisterUserResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/users/signup',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Verify Email
+     * Verify email with the given code.
+     * @param data The data for the request.
+     * @param data.email
+     * @param data.code
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static verifyEmail(data: UsersVerifyEmailData): CancelablePromise<UsersVerifyEmailResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/users/verify-email',
+            query: {
+                email: data.email,
+                code: data.code
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read User By Id
+     * Get a specific user by id.
+     * @param data The data for the request.
+     * @param data.userId
+     * @returns UserPublic Successful Response
+     * @throws ApiError
+     */
+    public static readUserById(data: UsersReadUserByIdData): CancelablePromise<UsersReadUserByIdResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/users/{user_id}',
+            path: {
+                user_id: data.userId
             },
             errors: {
                 422: 'Validation Error'
@@ -279,7 +348,7 @@ export class UtilsService {
     public static healthCheck(): CancelablePromise<UtilsHealthCheckResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/services/fastapi/utils/health-check/'
+            url: '/api/v1/utils/health-check/'
         });
     }
     

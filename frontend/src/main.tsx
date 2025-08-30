@@ -4,15 +4,18 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
+import {
+  RouterProvider,
+  createRouter,
+  useNavigate,
+} from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import MedicalImageProcessor from "./components/image-processor.tsx";
 import { ApiError, OpenAPI } from "./client";
 import { routeTree } from "./routeTree.gen";
+import { AuthKitProvider } from "@workos-inc/authkit-react";
 
-const APP_BASE_URL = import.meta.env.VITE_APP_BASE_URL || "/";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/";
 OpenAPI.BASE = import.meta.env.VITE_API_URL;
 OpenAPI.TOKEN = async () => {
   const token = localStorage.getItem("access_token") || "";
@@ -26,7 +29,7 @@ OpenAPI.TOKEN = async () => {
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
     localStorage.removeItem("access_token");
-    window.location.href = "http://127.0.0.1:8000/hub/login";
+    window.location.href = "/";
   }
 };
 
@@ -39,15 +42,11 @@ const queryClient = new QueryClient({
   }),
 });
 
-const currentUrl = new URL(window.location.href);
-const isHubRoute = currentUrl.pathname.indexOf("hub") !== -1;
-const basepath = isHubRoute ? APP_BASE_URL : API_BASE_URL;
-
 const router = createRouter({
   routeTree,
-  basepath: basepath,
 });
 console.log("Router created with basepath:", router.basepath);
+
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
@@ -57,13 +56,19 @@ declare module "@tanstack/react-router" {
 createRoot(document.getElementById("root")!).render(
   // disable strict mode for for better niivue development experience
   // <StrictMode>
-  <div className="app-container">
-    <div className="main-content">
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        {/* <MedicalImageProcessor /> */}
-      </QueryClientProvider>
+  <AuthKitProvider
+    clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}
+    apiHostname={import.meta.env.VITE_WORKOS_API_HOSTNAME}
+    redirectUri={import.meta.env.VITE_WORKOS_REDIRECT_URI}
+  >
+    <div className="app-container">
+      <div className="main-content">
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          {/* <MedicalImageProcessor /> */}
+        </QueryClientProvider>
+      </div>
     </div>
-  </div>
+  </AuthKitProvider>
   // </StrictMode>,
 );
