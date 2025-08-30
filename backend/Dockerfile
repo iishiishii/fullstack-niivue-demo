@@ -1,9 +1,4 @@
-FROM quay.io/jupyterhub/jupyterhub
-
-# Create test user (PAM auth) and install single-user Jupyter
-RUN useradd testuser --create-home --shell /bin/bash
-RUN echo 'testuser:passwd' | chpasswd
-RUN pip install jupyter
+FROM ubuntu:24.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -36,11 +31,6 @@ COPY ./scripts /app/scripts
 
 COPY ./app /app/app
 
-# Set up jupyterhub
-COPY jupyterhub_config.py /app/
-COPY ./templates /app/templates
-COPY ./static /app/static
-
 # Set environment variables for production
 ENV NIIVUE_BUILD_DIR="/app/static"
 ENV DATA_DIR="/app/data" 
@@ -48,6 +38,4 @@ ENV SCENE_SCHEMA_ID="niivue-fullstack-demo"
 ENV PYTHONPATH="/app"
 
 # Use the serve task for production
-# CMD ["pixi", "run", "serve"]
-CMD ["pixi", "run", "jupyterhub"]
-
+CMD ["pixi", "run", "serve"]

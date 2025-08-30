@@ -52,11 +52,10 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - SENTRY_DSN=${SENTRY_DSN}
-      - JUPYTERHUB_OAUTH_CALLBACK_URL=${JUPYTERHUB_OAUTH_CALLBACK_URL?Variable not set}
-      - JUPYTERHUB_CLIENT_ID=${JUPYTERHUB_CLIENT_ID?Variable not set}
-      - JUPYTERHUB_API_TOKEN=${JUPYTERHUB_API_TOKEN?Variable not set}
+      - WORKOS_API_KEY=${WORKOS_API_KEY?Variable not set}
+      - WORKOS_CLIENT_ID=${WORKOS_CLIENT_ID?Variable not set}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/services/fastapi/utils/health-check/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
       interval: 10s
       timeout: 5s
       retries: 5

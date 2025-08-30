@@ -16,7 +16,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 ALLOWED_EXTENSIONS = {".nii", ".nii.gz", ".dcm", ".mgz", ".img", ".hdr"}
 
 # Get base URL from environment or use default
-BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
+BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 def get_file_url(filename: str, request: Request = None) -> str:
     """Generate file URL based on server configuration."""
