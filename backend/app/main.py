@@ -4,7 +4,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 from pathlib import Path
-import os
 from app.api.main import api_router
 from app.core.config import settings
 
