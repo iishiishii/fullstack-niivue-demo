@@ -14,7 +14,6 @@ import "./index.css";
 import MedicalImageProcessor from "./components/image-processor.tsx";
 import { ApiError, OpenAPI } from "./client";
 import { routeTree } from "./routeTree.gen";
-import { AuthKitProvider } from "@workos-inc/authkit-react";
 
 OpenAPI.BASE = import.meta.env.VITE_API_URL;
 OpenAPI.TOKEN = async () => {
@@ -56,19 +55,13 @@ declare module "@tanstack/react-router" {
 createRoot(document.getElementById("root")!).render(
   // disable strict mode for for better niivue development experience
   // <StrictMode>
-  <AuthKitProvider
-    clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}
-    apiHostname={import.meta.env.VITE_WORKOS_API_HOSTNAME}
-    redirectUri={import.meta.env.VITE_WORKOS_REDIRECT_URI}
-  >
-    <div className="app-container">
-      <div className="main-content">
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          {/* <MedicalImageProcessor /> */}
-        </QueryClientProvider>
-      </div>
+  <div className="app-container">
+    <div className="main-content">
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        {/* <MedicalImageProcessor /> */}
+      </QueryClientProvider>
     </div>
-  </AuthKitProvider>
+  </div>
   // </StrictMode>,
 );

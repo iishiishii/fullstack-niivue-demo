@@ -84,6 +84,10 @@ export type Token = {
 
 export type UserPublic = {
     email: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    first_name?: (string | null);
+    last_name?: (string | null);
     id: string;
 };
 
@@ -182,7 +186,7 @@ export type UsersVerifyEmailData = {
     email: string;
 };
 
-export type UsersVerifyEmailResponse = (UserPublic);
+export type UsersVerifyEmailResponse = (Message);
 
 export type UsersReadUserByIdData = {
     userId: string;

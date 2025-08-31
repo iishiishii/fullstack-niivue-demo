@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
 from pathlib import Path
 from app.models import Scene, SceneCreate, ScenePublic, ProcessingStatus
 from app.api.deps import CurrentUser, SessionDep
+from app.core.config import settings
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -25,10 +26,10 @@ def get_file_url(filename: str, request: Request = None) -> str:
         base_url = f"{request.url.scheme}://{request.url.hostname}"
         if request.url.port:
             base_url += f":{request.url.port}"
-        return f"{base_url}/static/uploads/{filename}"
+        return f"{base_url}{settings.API_V1_STR}/static/uploads/{filename}"
     else:
         # Fallback to configured base URL
-        return f"{BASE_URL}/static/uploads/{filename}"
+        return f"{BASE_URL}{settings.API_V1_STR}/static/uploads/{filename}"
 
 def is_allowed_file(filename: str) -> bool:
     """Check if file extension is allowed."""

@@ -299,7 +299,7 @@ export class UsersService {
      * @param data The data for the request.
      * @param data.email
      * @param data.code
-     * @returns UserPublic Successful Response
+     * @returns Message Successful Response
      * @throws ApiError
      */
     public static verifyEmail(data: UsersVerifyEmailData): CancelablePromise<UsersVerifyEmailResponse> {
