@@ -159,16 +159,6 @@ function VerifyEmailPage() {
               </Alert>
             )}
 
-            {/* Success Message for Demo */}
-            <Alert className="bg-blue-50 border-blue-200">
-              <CheckCircle className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>Demo:</strong> Use code{" "}
-                <code className="bg-blue-100 px-1 rounded">123456</code> to
-                verify
-              </AlertDescription>
-            </Alert>
-
             {/* Verify Button */}
             <Button
               onClick={() => handleVerify()}

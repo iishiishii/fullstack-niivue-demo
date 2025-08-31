@@ -70,7 +70,6 @@ const useAuth = () => {
     const response = await LoginService.loginAccessToken({
       formData: data,
     });
-    console.log("Login successful, received access token:", response);
     localStorage.setItem("access_token", response.access_token);
   };
 

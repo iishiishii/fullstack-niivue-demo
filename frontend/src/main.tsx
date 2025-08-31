@@ -18,10 +18,6 @@ import { routeTree } from "./routeTree.gen";
 OpenAPI.BASE = import.meta.env.VITE_API_URL;
 OpenAPI.TOKEN = async () => {
   const token = localStorage.getItem("access_token") || "";
-  console.log(
-    "🔑 TOKEN being sent:",
-    token ? `${token.substring(0, 20)}...` : "NO TOKEN"
-  );
   return token;
 };
 

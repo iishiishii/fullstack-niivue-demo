@@ -52,7 +52,7 @@ export default function ProcessScene({
       })
       .join(" ");
 
-    return `niimath input.nii ${operationsStr} output.nii`;
+    return operationsStr;
   };
 
   const handleProcessImages = () => {
@@ -77,12 +77,12 @@ export default function ProcessScene({
           args: op.args.filter((arg) => arg.trim() !== ""),
           description: op.description,
         })),
-        command: generateNiimathCommand(niimathOperations),
+        command: `niimath input.nii ${generateNiimathCommand(niimathOperations)} output.nii`,
       };
     }
 
     mutation.mutate({
-      tool_name: selectedTool,
+      tool_name: generateNiimathCommand(niimathOperations),
       status: "processing",
     });
   };

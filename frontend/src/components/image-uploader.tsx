@@ -64,7 +64,6 @@ export default function ImageUploader({
       }
     },
     onSuccess: (scene) => {
-      console.log("Scene created with uploaded files:", scene);
       setProcessingStatus("processing");
       onSetSceneId(scene!.id);
     },
