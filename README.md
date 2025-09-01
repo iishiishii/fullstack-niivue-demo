@@ -35,13 +35,17 @@ You can **just fork or clone** this repository and follow the steps belows.
 
 You can then update configs in the `.env` files to customize your configurations.
 
-Before deploying it, make sure you change at least the value for `SECRET_KEY` in `.env` file by setting it to the output from this command `openssl rand -base64 32`.
+Before deploying it, make sure you change at least the values  in `.env` file for:
+
+- `SECRET_KEY` by setting it to the output from this command `openssl rand -base64 32`.
+- `WORKOS_API_KEY`
+- `WORKOS_CLIENT_ID`
 
 ### Start the app with Docker
 
 Once setting up the environment variable, you can start the app by running `docker compose watch`.
 
-You can login as test user with the following credentials:
+You can then go to `http://localhost:5173` in the browser and login as test user with the following credentials:
 ```
 Email: user@test.com
 Password: testuserpassword

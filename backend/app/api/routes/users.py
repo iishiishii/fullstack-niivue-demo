@@ -23,11 +23,8 @@ from app.models import (
 router = APIRouter(prefix="/users", tags=["users"])
 
 workos = WorkOSClient(
-    api_key=os.getenv("WORKOS_API_KEY", ""), client_id=os.getenv("WORKOS_CLIENT_ID", "")
+    api_key=settings.WORKOS_API_KEY, client_id=settings.WORKOS_CLIENT_ID
 )
-
-cookie_password = settings.SECRET_KEY
-
 
 @router.get("/me", response_model=UserPublic)
 def read_user_me(current_user: CurrentUser) -> Any:
@@ -42,12 +39,12 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
     Create new user without the need to be logged in.
     """
-    # user = crud.get_user_by_email(session=session, email=user_in.email)
-    # if user:
-    #     raise HTTPException(
-    #         status_code=400,
-    #         detail="The user with this email already exists in the system",
-    #     )
+    user = crud.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
     try:
         response = workos.user_management.create_user(
             email=user_in.email, password=user_in.password, first_name=user_in.first_name, last_name=user_in.last_name

@@ -15,10 +15,8 @@ from app.models import User
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
 )
-API_KEY = os.getenv("WORKOS_API_KEY", "")
-WORKOS_CLIENT_ID = os.getenv("WORKOS_CLIENT_ID", "")
 workos = WorkOSClient(
-    api_key=API_KEY, client_id=WORKOS_CLIENT_ID
+    api_key=settings.WORKOS_API_KEY, client_id=settings.WORKOS_CLIENT_ID
 )
 
 def get_db() -> Generator[Session, None, None]:
@@ -47,6 +45,8 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
 
     except Exception as e:
         print("Auth error:", e)
+
+    if not auth_response.authenticated:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
@@ -57,7 +57,7 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
     # 🔑 Fetch user from DB or create
     # db_user = session.exec(select(User).where(User.email == email)).first()
     user = session.exec(select(User).where(User.workos_id == user_id)).first()
-    if not user:
+    if not user_id or not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

@@ -24,7 +24,7 @@ OpenAPI.TOKEN = async () => {
 const handleApiError = (error: Error) => {
   if (error instanceof ApiError && [401, 403].includes(error.status)) {
     localStorage.removeItem("access_token");
-    window.location.href = "/";
+    window.location.href = "/auth";
   }
 };
 

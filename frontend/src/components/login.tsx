@@ -15,7 +15,6 @@ import { emailPattern, passwordRules } from "@/lib/api-utils";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Login form state
   const [loginForm, setLoginForm] = useState({
@@ -43,8 +42,6 @@ export default function Login() {
     console.log("Attempting login with data:", data);
 
     if (isSubmitting) return;
-
-    setIsLoading(true);
 
     resetError();
 
@@ -106,7 +103,7 @@ export default function Login() {
               </Button>
             </div>
           </div>
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="remember-me"
@@ -125,11 +122,15 @@ export default function Login() {
             <Button variant="link" className="px-0 text-sm">
               Forgot password?
             </Button>
-          </div>
+          </div> */}
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full mt-10" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign In"}
+          <Button
+            type="submit"
+            className="w-full mt-10"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Sign In"}
           </Button>
         </CardFooter>
       </form>

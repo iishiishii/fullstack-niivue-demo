@@ -24,8 +24,6 @@ interface UserRegisterForm extends UserRegister {
 export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
   const { signUpMutation } = useAuth();
 
   // Signup form state
@@ -61,8 +59,6 @@ export default function Signup() {
       alert("Passwords do not match");
       return;
     }
-
-    setIsLoading(true);
   };
 
   return (
@@ -176,8 +172,12 @@ export default function Signup() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full mt-10" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create Account"}
+          <Button
+            type="submit"
+            className="w-full mt-10"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating account..." : "Create Account"}
           </Button>
         </CardFooter>
       </form>

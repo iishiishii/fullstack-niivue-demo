@@ -18,7 +18,20 @@ Automatic Alternative Docs (ReDoc): http://localhost:8000/redoc
 
 ## Local Development
 
-## set up environments and install dependencies
+## Local setup using Docker 
+
+Requirements:
+- Docker
+
+You need to run the following command that will build the Docker images and will run the app while watching for changes on the codebase for hot reloads. 
+
+```bash
+docker compose watch
+```
+
+To see the app running, open your browser and go to `http://localhost:5173`. 
+
+## Local Setup (Legacy)
 
 Requirements:
 - Node.js (for frontend environment)
@@ -56,7 +69,7 @@ This hot reloads the backend when changes are made to the code.
 
 ```bash
 cd backend
-pixi run dev
+pixi run serve
 ```
 
 ## build the frontend for production
@@ -65,3 +78,20 @@ pixi run dev
 cd frontend
 npm run build
 ```
+
+## Environment Variables
+
+You can set several variables, like:
+
+* `PROJECT_NAME`: The name of the project, used in the API for the docs and emails.
+* `STACK_NAME`: The name of the stack used for Docker Compose labels and project name.
+* `BACKEND_CORS_ORIGINS`: A list of allowed CORS origins separated by commas.
+* `SECRET_KEY`: The secret key for the FastAPI project, used to sign tokens from WorkOS. This is obtained by encoding automatically generated 32 random bytes.
+* `FIRST_SUPERUSER`: The email of the first superuser, this superuser will be the one that can create new users.
+* `FIRST_SUPERUSER_PASSWORD`: The password of the first superuser.
+* `POSTGRES_SERVER`: The hostname of the PostgreSQL server. You can leave the default of `db`, provided by the same Docker Compose. You normally wouldn't need to change this unless you are using a third-party provider.
+* `POSTGRES_PORT`: The port of the PostgreSQL server. You can leave the default. You normally wouldn't need to change this unless you are using a third-party provider.
+* `POSTGRES_PASSWORD`: The Postgres password.
+* `POSTGRES_USER`: The Postgres user, you can leave the default.
+* `POSTGRES_DB`: The database name to use for this application. You can leave the default of `app`.
+* `SENTRY_DSN`: The DSN for Sentry, if you are using it.

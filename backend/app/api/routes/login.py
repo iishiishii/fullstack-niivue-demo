@@ -1,25 +1,22 @@
 import os
-from datetime import timedelta
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from workos import WorkOSClient
 
-from app import crud
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import CurrentUser
 from app.core.config import settings
-from app.models import Token, UserPublic
+from app.models import Token
 
 router = APIRouter(tags=["login"])
-API_KEY = os.getenv("WORKOS_API_KEY", "")
-WORKOS_CLIENT_ID = os.getenv("WORKOS_CLIENT_ID", "")
 workos = WorkOSClient(
-    api_key=API_KEY, client_id=WORKOS_CLIENT_ID
+    api_key=settings.WORKOS_API_KEY, client_id=settings.WORKOS_CLIENT_ID
 )
 
 @router.post("/login/access-token")
 async def login_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+    print("settings secret:", settings.SECRET_KEY)
     try:
         password_response = workos.user_management.authenticate_with_password(
             email=form_data.username, password=form_data.password

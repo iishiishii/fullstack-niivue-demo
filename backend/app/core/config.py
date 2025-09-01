@@ -1,4 +1,5 @@
 import secrets
+import base64
 import warnings
 from typing import Annotated, Any, Literal
 
@@ -32,9 +33,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = secrets.token_urlsafe(32)
-    # 60 minutes * 24 hours * 8 days = 8 days
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+    SECRET_KEY: str = base64.b64encode(secrets.token_bytes(32)).decode("utf-8")
+    
     FRONTEND_HOST: str = "http://localhost:5173"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
@@ -69,19 +69,12 @@ class Settings(BaseSettings):
             path=self.POSTGRES_DB,
         )
 
-    EMAILS_FROM_NAME: EmailStr | None = None
-
-    @model_validator(mode="after")
-    def _set_default_emails_from(self) -> Self:
-        if not self.EMAILS_FROM_NAME:
-            self.EMAILS_FROM_NAME = self.PROJECT_NAME
-        return self
-
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
-
-    EMAIL_TEST_USER: EmailStr = "user@test.com"
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
+    FIRST_WORKOS_USER_ID: str = "user_01K3ZVXNEN2CBQFE642K7E0T0G" # created test user from WorkOS
+
+    WORKOS_API_KEY: str = ""
+    WORKOS_CLIENT_ID: str = ""
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
